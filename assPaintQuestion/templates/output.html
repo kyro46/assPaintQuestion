@@ -1,0 +1,45 @@
+<style type="text/css">
+input[disabled] { 
+	border: 1px;
+	background-color: rgb(0, 0, 0);
+	color: rgb(202, 202, 202);
+}
+</style>
+<p>{QUESTIONTEXT}</p>
+<!-- Zeige Auswahlfeld fuer Linienstaerke -->
+<label style="{DISPLAY_LINE} float:left;" for="selWidth">{LINESELECT}&nbsp;</label> 
+<select id="selWidth" style="border-radius: 4px; border: 1px solid rgb(170, 170, 170); padding: 2px; {DISPLAY_LINE}">
+	<option value="1">1</option>
+	<option selected="selected" value="3">3</option>
+	<option value="6">6</option>
+	<option value="8">8</option>
+	<option value="10">10</option>
+	<option value="12">12</option>
+</select>        
+<!-- Zeige Auswahlfeld fuer Linienfarbe -->
+<label style="{DISPLAY_COLOR}" for="selColor">{COLORSELECT}&nbsp;</label>
+<select id="selColor" style="border-radius: 4px; border: 1px solid rgb(170, 170, 170); padding: 2px; {DISPLAY_COLOR}">
+	<option selected="selected" value="black">{BLACK}</option>
+	<option value="blue">{BLUE}</option>            
+	<option value="gray">{GRAY}</option>
+	<option value="green">{GREEN}</option>
+	<option value="red">{RED}</option>
+	<option value="yellow">{YELLOW}</option>                
+</select>        
+<input class="submit" type="button" name="undo" value="{UNDO}" onclick="paintTask.undo(); return false;">
+<input class="submit" type="button" name="redo" value="{REDO}" onclick="paintTask.redo(); return false;">        
+<input class="submit" type="button" name="paint" id="paint" value="{PAINT}" onclick="paintTask.erasePaint(this); return false;" disabled /><input class="submit" type="button" name="erase" id="erase" value="{ERASE}" onclick="paintTask.erasePaint(this); return false;" />
+<input class="submit" type="button" name="clear" value="{CLEAR_ALL}" onclick="paintTask.clear(); return false;">          
+<br><br>
+<!-- Eigentliches Zeichenfenster -->
+<div style="width:{WIDTH}px; height:{HEIGHT}px; border:1px solid #000000; overflow:auto;">
+	<!-- resize:both; overflow:auto;  nur im Firefox?-->
+	<!-- BACKGROUND ist das Hintergrundbild zur Aufgabe sofern eines angegeben wurde -->
+	<canvas id="paintCanvas" width="{WIDTH}" height="{HEIGHT}" style="vertical-align: bottom; {BACKGROUND} cursor: crosshair;">Kein Canvas unterstüzt!</canvas>	
+</div>  
+<!-- Zeigt Bereich, der geloescht werden soll -->
+<div id="eraseIcon" style="width:10px; height:10px; background: black; pointer-events:none; position: absolute; display: none;"></div>
+<!-- Hier wird das erzeugte Bild als base64-string gespeichert-->
+<textarea id="answerImage" name="answerImage" cols="50" rows="10" style="display:none;"></textarea>
+<!-- Gesamte Funktionalitaet, in RESUME steht letzte Speicherstand der Testperson, siehe script.js -->
+<script>var paintTask = new PaintTask("{RESUME}");</script>

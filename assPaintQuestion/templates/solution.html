@@ -1,0 +1,23 @@
+<p>{QUESTIONTEXT}</p>
+<div style="width:{WIDTH}px; height:{HEIGHT}px; border:1px solid #000000; overflow:auto;">
+<canvas id="paintCanvas{ID}" width="{WIDTH}" height="{HEIGHT}" style="vertical-align: bottom; {BACKGROUND} cursor: crosshair;">Kein Canvas unterstüzt!</canvas>	
+<script>
+	var canvas{ID} = document.getElementById("paintCanvas{ID}");
+	var ctx{ID} = canvas{ID}.getContext('2d');
+	var imageObj{ID} = new Image();
+	/*imageObj{ID}.onload = function() {
+		// zeichne hintergrund
+		ctx{ID}.globalCompositeOperation="destination-over";		
+		ctx{ID}.drawImage(imageObj{ID}, 0,0);		
+		ctx{ID}.globalCompositeOperation="source-over";
+	};
+	imageObj{ID}.src = "{BACKGROUND}";
+	*/
+	var img{ID} = new Image;
+	img{ID}.onload = function(){
+		// zeichne abgabe
+		ctx{ID}.drawImage(img{ID},0,0); 
+	};
+	img{ID}.src = "{SOLUTION}";
+</script>
+</div>

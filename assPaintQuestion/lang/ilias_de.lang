@@ -1,0 +1,25 @@
+questionType#:#Zeichenaufgabe
+points#:#Punkte
+save#:#Speichern
+errorInput#:#Eingaben unvollständig
+image#:#Hintergrundbild
+color#:#Erlaube Farbauswahl
+line#:#Erlaube verschiedene Stiftgrößen
+lineSelect#:#Linienbreite:
+colorSelect#:#Farbe:
+black#:#schwarz
+blue#:#blau
+gray#:#grau
+green#:#grün
+red#:#rot
+yellow#:#gelb
+undo#:#Rückgängig
+redo#:#Wiederholen
+paint#:#Zeichnen
+erase#:#Radierer
+clearAll#:#Alles Löschen
+canvasArea#:#Zeichenbereich
+useImageSize#:#Nutze die Größe des Hintergrundbildes (800 x 700 wenn kein Bild angegeben)
+useOwnSize#:#Eigene Angaben
+width#:#Breite
+height#:#Höhe
