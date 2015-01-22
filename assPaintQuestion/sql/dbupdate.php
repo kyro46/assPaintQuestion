@@ -1,6 +1,6 @@
 <#1>
 <?php
-	// Trage PaintQuestion als neuen Fragetyp ein, wenn es diesen noch nicht gibt
+	//Add Paint Question Type
 	$res = $ilDB->queryF("SELECT * FROM qpl_qst_type WHERE type_tag = %s",
 		array('text'),
 		array('assPaintQuestion')
@@ -19,7 +19,7 @@
 ?>
 <#2>
 <?php
-	// speichere angegebenes hintergrundbild
+	//Save Backgroundimage
 	$fields = array(
 			'question_fi'	=> array('type' => 'integer', 'length' => 4, 'notnull' => true ),
 			'image_file' 	=> array('type' => 'text', 'length' => 200, 'fixed' => false, 'notnull' => true )
@@ -27,7 +27,7 @@
 	$ilDB->createTable("il_qpl_qst_paint_image", $fields);
 	$ilDB->addPrimaryKey("il_qpl_qst_paint_image", array("question_fi"));	
 	
-	// erlaube farbauswahl und linienstärke? zeichengoesse nach image oder selbst?
+	//Enable Colourselection, Brushsize, Canvassize definition
 	$fields = array(
 			'question_fi'	=> array('type' => 'integer', 'length' => 4, 'notnull' => true ),
 			'line' 			=> array('type' => 'integer', 'length' => 1),
