@@ -420,7 +420,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("solution.html");		
+		$template     = $plugin->getTemplate("solution.html");
 		$output = $this->object->getQuestion();			
 		
 		if ($show_correct_solution)
@@ -431,9 +431,36 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}			
 		else
 			$template->setVariable("ID", $this->object->getId());		
-		
+
+		//get background and save in var
 		if ($this->object->getImageFilename())
-			$template->setVariable("BACKGROUND", "background:url(".$this->object->getImagePathWeb().$this->object->getImageFilename()."); background-size:100% 100%;");	
+		{
+			list ( $width, $height, $type ) = getimagesize ( $this->object->getImagePathWeb().$this->object->getImageFilename() );
+			switch ( $type )
+			{
+				case 1:
+					$background = imagecreatefromgif ($this->object->getImagePathWeb().$this->object->getImageFilename());
+					break;
+				case 2:
+					$background = imagecreatefromjpeg ($this->object->getImagePathWeb().$this->object->getImageFilename());
+					break;
+				case 3:
+					$background = imagecreatefrompng ($this->object->getImagePathWeb().$this->object->getImageFilename());
+			} 
+			//predefine picture in case no drawing exists -> show only background image
+			ob_start();
+			imagepng($background);
+			$image = ob_get_clean();
+			$base64 = base64_encode( $image );	
+		} else 
+		{
+			//transparent pixel, no background
+			//will be overwritten if drawing exists
+			$base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
+		}
+		//preset formular
+		$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));
+
 		
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
@@ -456,15 +483,40 @@ class assPaintQuestionGUI extends assQuestionGUI
 		
 		foreach ($user_solution as $solution)
 		{				
-				$base64 = "";
+				
 				if ($user_solution[0]["value2"])
 				{
 					$content = file_get_contents ( $user_solution[0]["value2"]);
-					$base64 = 'data:image/png;base64,'.base64_encode( $content );
-				}				
+
+					//merge background and drawing if backgroundimage available
+					if( $this->object->getImageFilename() )
+					{
+						$drawing = imagecreatefromstring($content);
+						$x1 = imagesx($background);
+						$y1 = imagesy($background);
+						$x2 = imagesx($drawing);
+						$y2 = imagesy($drawing);
+
+						imagecopyresampled(
+							$background, $drawing,
+							0, 0, 0, 0,
+							$x1, $y1,
+							$x2, $y2);
+							
+						ob_start();
+						imagepng($background);
+						$image = ob_get_clean();
+						$base64 = base64_encode( $image );
+						imagedestroy($background);  
+						imagedestroy($drawing);
+					} else //only use the drawing
+					{
+						$base64 = base64_encode( $content );
+					} 
+				}
 				$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));		
 		}		
-		
+
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
 		
 		if ($result_output)
