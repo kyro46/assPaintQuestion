@@ -492,6 +492,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 					if( $this->object->getImageFilename() )
 					{
 						$drawing = imagecreatefromstring($content);
+
 						$x1 = imagesx($background);
 						$y1 = imagesy($background);
 						$x2 = imagesx($drawing);
@@ -502,9 +503,18 @@ class assPaintQuestionGUI extends assQuestionGUI
 							0, 0, 0, 0,
 							$x1, $y1,
 							$x2, $y2);
-							
+
 						ob_start();
-						imagepng($background);
+						//resizing the picture to custom values
+						if ($this->object->getRadioOption() == "radioOwnSize")
+						{
+							$resized=imagecreatetruecolor($this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+							imagecopyresampled($resized,$background,0,0,0,0,$this->object->getCanvasWidth(),$this->object->getCanvasHeight(),$x1,$y1);
+							imagepng($resized);
+						} else //use original background
+						{
+							imagepng($background);			
+						}
 						$image = ob_get_clean();
 						$base64 = base64_encode( $image );
 						imagedestroy($background);  
