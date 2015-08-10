@@ -213,7 +213,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * 
 	 * @param boolean	show only the question instead of embedding page (true/false)
 	 */
-	function getPreview($show_question_only = FALSE)
+	function getPreview($show_question_only = false, $showInlineFeedback = false)
 	{		
 		global $tpl;			
 		$plugin       = $this->object->getPlugin();		
