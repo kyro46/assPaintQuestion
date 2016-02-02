@@ -272,24 +272,6 @@ class assPaintQuestionGUI extends assQuestionGUI
 	}
 
 	/**
-	 * Show the question in Test mode
-	 * (called from ilTestOutputGUI)
-	 * 
-	 * @param string $formaction			The action link for the form
-	 * @param integer $active_id			The active user id
-	 * @param integer $pass					The test pass
-	 * @param boolean $is_postponed			Question is postponed
-	 * @param boolean $use_post_solutions	Use post solutions
-	 * @param boolean $show_feedback		Show a feedback
-	 */
-	function outQuestionForTest($formaction, $active_id, $pass = NULL, $is_postponed = FALSE, $use_post_solutions = FALSE, $show_feedback = FALSE)
-	{		
-		$test_output = $this->getTestOutput($active_id, $pass, $is_postponed, $use_post_solutions, $show_feedback); 
-		$this->tpl->setVariable("QUESTION_OUTPUT", $test_output);
-		$this->tpl->setVariable("FORMACTION", $formaction);	
-	}
-	
-	/**
 	 * Get the HTML output of the question for a test
 	 * 
 	 * @param integer $active_id			The active user id

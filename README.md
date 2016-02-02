@@ -1,4 +1,5 @@
-# ILIAS 4.4 paint question #
+# assPaintQuestion
+Paint-Questiontypeplugin for ILIAS 4.4.x/5.0.x/5.1.x
 
 ### Questiontype that allows drawing on a backgroundimage or a plain canvas ###
 
@@ -18,4 +19,4 @@ and activate it in the ILIAS-Admin-GUI. Manual correction has to be enabled for 
 
 ### Credits ###
 * Developing plugin for ILIAS 4.4 by Yves Annanias, University Halle 2014
-* Refactoring by Christoph Jobst, University Halle 2014/2015
+* Refactoring by Christoph Jobst, University Halle 2014/2015/2016
