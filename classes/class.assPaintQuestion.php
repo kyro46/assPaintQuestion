@@ -416,8 +416,11 @@ class assPaintQuestion extends assQuestion
 			ilUtil::makeDirParents($imagepath);
 		}
 		$filename = $this->getImageFilename();
-		if (!copy($imagepath_original . $filename, $imagepath . $filename)) {
-			print "image could not be duplicated!!!! ";
+		
+		if (!empty($filename)) {
+			if (!copy($imagepath_original . $filename, $imagepath . $filename)) {
+				print "Image could not be duplicated.";
+			}
 		}
 	}
 
@@ -431,9 +434,10 @@ class assPaintQuestion extends assQuestion
 			ilUtil::makeDirParents($imagepath);
 		}
 		$filename = $this->getImageFilename();
+		
 		if (!copy($imagepath_original . $filename, $imagepath . $filename)) 
 		{
-			print "image could not be copied!!!! ";
+			print "Image could not be copied.";
 		}
 	}
 	/**
