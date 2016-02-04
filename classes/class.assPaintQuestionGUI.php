@@ -417,17 +417,20 @@ class assPaintQuestionGUI extends assQuestionGUI
 		//get background and save in var
 		if ($this->object->getImageFilename())
 		{
-			list ( $width, $height, $type ) = getimagesize ( $this->object->getImagePath().$this->object->getImageFilename() );
+			$pathToImage = $this->object->getImagePath().$this->object->getImageFilename();
+
+			list ( $width, $height, $type ) = getimagesize ( $pathToImage );
+			
 			switch ( $type )
 			{
 				case 1:
-					$background = imagecreatefromgif ($this->object->getImagePath().$this->object->getImageFilename());
+					$background = imagecreatefromgif ($pathToImage);
 					break;
 				case 2:
-					$background = imagecreatefromjpeg ($this->object->getImagePath().$this->object->getImageFilename());
+					$background = imagecreatefromjpeg ($pathToImage);
 					break;
 				case 3:
-					$background = imagecreatefrompng ($this->object->getImagePath().$this->object->getImageFilename());
+					$background = imagecreatefrompng ($pathToImage);
 			} 
 			//predefine picture in case no drawing exists -> show only background image
 			ob_start();
