@@ -35,63 +35,8 @@ class assPaintQuestionImport extends assQuestionImport
 		$now = getdate();
 		$created = sprintf("%04d%02d%02d%02d%02d%02d", $now['year'], $now['mon'], $now['mday'], $now['hours'], $now['minutes'], $now['seconds']);
 
-			// get the generic feedbach
 		$feedbacksgeneric = array();
-		if (isset($item->itemfeedback))
-		{
-			foreach ($item->itemfeedback as $ifb)
-			{
-				if (strcmp($ifb->getIdent(), "response_allcorrect") == 0)
-				{
-					// found a feedback for the identifier
-					if (count($ifb->material))
-					{
-						foreach ($ifb->material as $material)
-						{
-							$feedbacksgeneric[1] = $material;
-						}
-					}
-					if ((count($ifb->flow_mat) > 0))
-					{
-						foreach ($ifb->flow_mat as $fmat)
-						{
-							if (count($fmat->material))
-							{
-								foreach ($fmat->material as $material)
-								{
-									$feedbacksgeneric[1] = $material;
-								}
-							}
-						}
-					}
-				}
-				else if (strcmp($ifb->getIdent(), "response_onenotcorrect") == 0)
-				{
-					// found a feedback for the identifier
-					if (count($ifb->material))
-					{
-						foreach ($ifb->material as $material)
-						{
-							$feedbacksgeneric[0] = $material;
-						}
-					}
-					if ((count($ifb->flow_mat) > 0))
-					{
-						foreach ($ifb->flow_mat as $fmat)
-						{
-							if (count($fmat->material))
-							{
-								foreach ($fmat->material as $material)
-								{
-									$feedbacksgeneric[0] = $material;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		
+
 		$this->object->setTitle($item->getTitle());
 		$this->object->setComment($item->getComment());
 		$this->object->setAuthor($item->getAuthor());
@@ -103,22 +48,8 @@ class assPaintQuestionImport extends assQuestionImport
 		$this->object->setLineValue($item->getMetadataEntry("allowDifferentLineSize"));
 		$this->object->setColorValue($item->getMetadataEntry("allowDifferentColors"));
 		
-		// additional content editing mode information
-		$this->object->setAdditionalContentEditingMode(
-			$this->fetchAdditionalContentEditingModeInformation($item)
-		);
+		$this->object->saveToDb('', false);
 
-		// first save the question to get a new question id
-		$this->object->saveToDb();
-
-
-		// convert the generic feedback
-		foreach ($feedbacksgeneric as $correctness => $material)
-		{
-			$m = $this->object->QTIMaterialToString($material);
-			$feedbacksgeneric[$correctness] = $m;
-		}
-		
 		// handle the import of media objects in XHTML code
 		$questiontext = $this->object->getQuestion();
 		if (is_array($_SESSION["import_mob_xhtml"]))
@@ -129,37 +60,84 @@ class assPaintQuestionImport extends assQuestionImport
 			{
 				if ($tst_id > 0)
 				{
-					$importfile = $this->getTstImportArchivDirectory() . '/' . $mob["uri"];
+					include_once "./Modules/Test/classes/class.ilObjTest.php";
+					$importfile = ilObjTest::_getImportDirectory() . '/' . $mob["uri"];
 				}
 				else
 				{
-					$importfile = $this->getQplImportArchivDirectory() . '/' . $mob["uri"];
+					include_once "./Modules/TestQuestionPool/classes/class.ilObjQuestionPool.php";
+					$importfile = ilObjQuestionPool::_getImportDirectory() . '/' . $mob["uri"];
 				}
-				global $ilLog;
-				$ilLog->write($importfile);
-		
 				$media_object =& ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, FALSE);
 				ilObjMediaObject::_saveUsage($media_object->getId(), "qpl:html", $this->object->getId());
-		
-				// images in question text
-				$questiontext = str_replace("src=\"" . $mob["mob"] . "\"", "src=\"" . "il_" . IL_INST_ID . "_mob_" . $media_object->getId() . "\"", $questiontext);
-		
-				// images in feedback
-				foreach ($feedbacksgeneric as $correctness => $material)
+				$questiontext = str_replace("src=\"" . $mob["mob"] . "\"", "src=\"" . "il_" . IL_INST_ID . "_mob_" . $media_object->getId() . "\"", $questiontext);			
+			}
+		}
+		$this->object->setQuestion(ilRTE::_replaceMediaObjectImageSrc($questiontext, 1));
+		// feedback
+		$feedbacksgeneric = array();		
+		foreach ($item->itemfeedback as $ifb)
+		{
+			if (strcmp($ifb->getIdent(), "response_allcorrect") == 0)
+			{
+				// found a feedback for the identifier
+				if (count($ifb->material))
 				{
-					$feedbacksgeneric[$correctness] = str_replace("src=\"" . $mob["mob"] . "\"", "src=\"" . "il_" . IL_INST_ID . "_mob_" . $media_object->getId() . "\"", $material);
+					foreach ($ifb->material as $material)
+					{
+						$feedbacksgeneric[1] = $material;
+					}
+				}
+				if ((count($ifb->flow_mat) > 0))
+				{
+					foreach ($ifb->flow_mat as $fmat)
+					{
+						if (count($fmat->material))
+						{
+							foreach ($fmat->material as $material)
+							{
+								$feedbacksgeneric[1] = $material;
+							}
+						}
+					}
+				}
+			} 
+			else if (strcmp($ifb->getIdent(), "response_onenotcorrect") == 0)
+			{
+				// found a feedback for the identifier
+				if (count($ifb->material))
+				{
+					foreach ($ifb->material as $material)
+					{
+						$feedbacksgeneric[0] = $material;
+					}
+				}
+				if ((count($ifb->flow_mat) > 0))
+				{
+					foreach ($ifb->flow_mat as $fmat)
+					{
+						if (count($fmat->material))
+						{
+							foreach ($fmat->material as $material)
+							{
+								$feedbacksgeneric[0] = $material;
+							}
+						}
+					}
 				}
 			}
 		}
-		
-		$this->object->setQuestion(ilRTE::_replaceMediaObjectImageSrc($questiontext, 1));
+			
+		// genericFeedback
+		foreach ($feedbacksgeneric as $correctness => $material)
+		{			
+			$m = $this->object->QTIMaterialToString($material);
+			$feedbacksgeneric[$correctness] = $m;			
+		}
 		foreach ($feedbacksgeneric as $correctness => $material)
 		{
-			$this->object->feedbackOBJ->importGenericFeedback(
-					$this->object->getId(), $correctness, ilRTE::_replaceMediaObjectImageSrc($material, 1)
-			);
-		}
-		
+			$this->object->saveFeedbackGeneric($correctness, ilRTE::_replaceMediaObjectImageSrc($material, 1));
+		}		
 		// backgroundImage		
 		if ($item->getMetadataEntry("backgroundimage") )
 		{
@@ -168,8 +146,7 @@ class assPaintQuestionImport extends assQuestionImport
 				"label" => $item->getMetadataEntry("imagelabel"),
 				"content" => $item->getMetadataEntry("backgroundimage")
 			);
-			
-			$this->object->setImageFilename($questionimage["label"]);			
+			$this->object->setImageFilename($questionimage["label"]);
 			$image =& base64_decode($questionimage["content"]);
 			$imagepath = $this->object->getImagePath();
 			if (!file_exists($imagepath))
@@ -181,9 +158,9 @@ class assPaintQuestionImport extends assQuestionImport
 			$fh = fopen($imagepath, "wb");
 			if ($fh == false)
 			{
-				//global $ilErr;
-				//$ilErr->raiseError($this->object->lng->txt("error_save_image_file") . ": $php_errormsg", $ilErr->MESSAGE);
-				//return;
+	//									global $ilErr;
+	//									$ilErr->raiseError($this->object->lng->txt("error_save_image_file") . ": $php_errormsg", $ilErr->MESSAGE);
+	//									return;
 			}
 			else
 			{
@@ -194,15 +171,13 @@ class assPaintQuestionImport extends assQuestionImport
 		$this->object->setRadioOption($item->getMetadataEntry("radiooption"));
 		$this->object->setCanvasHeight($item->getMetadataEntry("canvasheight"));
 		$this->object->setCanvasWidth($item->getMetadataEntry("canvaswidth"));
-			
-		// Now save the question again
+
 		$this->object->saveToDb();
 
-		// import mapping for tests
 		if ($tst_id > 0)
 		{
 			$q_1_id = $this->object->getId();
-			$question_id = $this->object->duplicate(true, null, null, null, $tst_id);
+			$question_id = $this->object->duplicate(true);
 			$tst_object->questions[$question_counter++] = $question_id;
 			$import_mapping[$item->getIdent()] = array("pool" => $q_1_id, "test" => $question_id);
 		}

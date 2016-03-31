@@ -6,7 +6,6 @@
 	*
 	* @author Yves Annanias <yves.annanias@llz.uni-halle.de>
 	* @version $Id$
-	* * @ingroup ModulesTestQuestionPool
 	*
 	*/
 	class ilassPaintQuestionPlugin extends ilQuestionsPlugin

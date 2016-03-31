@@ -3,52 +3,46 @@
 include_once "./Modules/TestQuestionPool/classes/class.assQuestionGUI.php";
 include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
 
- /**
- * The assPaintQuestionGUI class encapsulates the GUI representation
- * for Question-Type-Plugin.
- *
- * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
- * @ingroup ModulesTestQuestionPool
- *
- * @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
- */
+/**
+* The assPaintQuestionGUI class encapsulates the GUI representation
+* for Question-Type-Plugin.
+*
+* @author Yves Annanias <yves.annanias@llz.uni-halle.de>
+* @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
+* */
 class assPaintQuestionGUI extends assQuestionGUI
 {		
-	/**
-	 * @var assPaintQuestionPlugin	The plugin object
-	 */
+	
 	var $plugin = null;
-
+	
 	/**
-	 * Constructor
-	 *
-	 * @param integer $id The database id of a question object
-	 * @access public
-	 */
-	public function __construct($id = -1)
+	* assPaintQuestionGUI constructor	
+	* The constructor takes possible arguments an creates an instance of the assPaintQuestionGUI object.
+	*
+	* @param integer $id The database id of a TemplateQuestion question object
+	* @access public
+	*/
+	function __construct($id = -1)
 	{
 		parent::__construct();
 		include_once "./Services/Component/classes/class.ilPlugin.php";
-		$this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, "TestQuestionPool", "qst", "assPaintQuestion");
-		$this->plugin->includeClass("class.assPaintQuestion.php");
-		$this->object = new assPaintQuestion();
+		$plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, "TestQuestionPool", "qst", "assPaintQuestion");
+		$plugin->includeClass("class.assPaintQuestion.php");
+		$this->object = new assPaintQuestion();	
 		if ($id >= 0)
 		{
 			$this->object->loadFromDb($id);
-		}
-	}	
-	
+		}		
+	}
+
 	/**
-	 * Creates an output of the edit form for the question
-	 *
-	 * @param bool $checkonly
-	 * @return bool
-	 */
-	public function editQuestion($checkonly = FALSE)
+	* Creates an output of the edit form for the question	
+	* @access public
+	*/
+	function editQuestion()
 	{
 		global $ilDB;					
-
-		$save = $this->isSaveCommand();
+			
 		$plugin = $this->object->getPlugin();		
 		
 		$this->getQuestionTemplate();
@@ -59,17 +53,15 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$form->setMultipart(FALSE);
 		$form->setTableWidth("100%");
 		$form->setId("assPaintQuestion");
-		// Baseinput: title, author, description, question, working time (assessment mode)		
+		// Basiseingabefelder: title, author, description, question, working time (assessment mode)		
 		$this->addBasicQuestionFormProperties($form);
 		
-		//Start Question specific
 		// points
 		$points = new ilNumberInputGUI($plugin->txt("points"), "points");
-		$points->setSize(3);
-		$points->setMinValue(0);
-		$points->allowDecimals(1);
-		$points->setRequired(true);
 		$points->setValue($this->object->getPoints());
+		$points->setRequired(TRUE);
+		$points->setSize(10);
+		$points->setMinValue(0.0);
 		$form->addItem($points);
 		
 		// background-image		
@@ -80,7 +72,6 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		$form->addItem($image);
 		
-		//cancassize
 		$canvasArea = new ilRadioGroupInputGUI($plugin->txt("canvasArea"), "canvasArea");
 		$canvasArea->addOption(new ilRadioOption($plugin->txt("useImageSize"), 'radioImageSize', ''));
 		$ownSize = new ilRadioOption($plugin->txt("useOwnSize"), 'radioOwnSize', '');
@@ -89,51 +80,33 @@ class assPaintQuestionGUI extends assQuestionGUI
 		
 		$sizeWidth = new ilNumberInputGUI($plugin->txt("width"),"sizeWidth");
 		$sizeWidth->setValue($this->object->getCanvasWidth());		
-		$sizeWidth->setSize(6);
+		$sizeWidth->setSize(10);
 		$sizeWidth->setMinValue(100);
 		
 		$sizeHeight = new ilNumberInputGUI($plugin->txt("height"),"sizeHeight");
 		$sizeHeight->setValue($this->object->getCanvasHeight());
-		$sizeHeight->setSize(6);
+		$sizeHeight->setSize(10);
 		$sizeHeight->setMinValue(100);
 		
 		$ownSize->addSubItem($sizeWidth);
 		$ownSize->addSubItem($sizeHeight);
 		$form->addItem($canvasArea);
 		
-		// brushsize
+		// erlaube stiftgroeße?
 		$line = new ilCheckboxInputGUI($plugin->txt("line"), 'lineValue');
 		if ($this->object->getLineValue())
 			$line->setChecked(true);
 		$form->addItem($line);
 		
-		// colourselection
+		// erlaube farbe?
 		$color = new ilCheckboxInputGUI($plugin->txt("color"), 'colorValue');
 		if ($this->object->getColorValue())
 			$color->setChecked(true);
 		$form->addItem($color);	
-			
-		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
-		//End Question specific
 		
-		$this->populateTaxonomyFormSection($form);
-		$this->addQuestionFormCommandButtons($form);
-
-		$errors = false;
-
-		if ($save)
-		{
-			$form->setValuesByPost();
-			$errors = !$form->checkInput();
-			$form->setValuesByPost(); // again, because checkInput now performs the whole stripSlashes handling and we need this if we don't want to have duplication of backslashes
-			if ($errors) $checkonly = false;
-		}
-
-		if (!$checkonly)
-		{
-			$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());
-		}
-		return $errors;
+		$form->addCommandButton('save', $plugin->txt("save"));
+		
+		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
 	}
 	
 	/**
@@ -173,13 +146,22 @@ class assPaintQuestionGUI extends assQuestionGUI
 	* @return integer A positive value, if one of the required fields wasn't set, else 0
 	*/
 	function writePostData($always = false)
-	{
-		$hasErrors = (!$always) ? $this->editQuestion(true) : false;
-		if (!$hasErrors)
+	{		
+		$this->editQuestion();
+		if ($this->checkInput())
 		{
-			$this->writeQuestionGenericPostData();
-			
-			$this->object->setPoints($_POST["points"]);									
+			$this->object->setTitle($_POST["title"]);
+			$this->object->setAuthor($_POST["author"]);
+			$this->object->setComment($_POST["comment"]);
+			$this->object->setOwner($_POST["owner"]);
+			$this->object->setPoints($_POST["points"]);			
+			include_once "./Services/AdvancedEditing/classes/class.ilObjAdvancedEditing.php";			
+			$this->object->setQuestion($_POST["question"]);
+			$this->object->setEstimatedWorkingTime(
+				$_POST["Estimated"]["hh"],
+				$_POST["Estimated"]["mm"],
+				$_POST["Estimated"]["ss"]
+			);							
 						
 			if ($_POST['imagefile_delete'])						
 			{
@@ -197,8 +179,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$this->object->setCanvasHeight($_POST["sizeHeight"]);
 			$this->object->setLineValue($_POST['lineValue']);		
 			$this->object->setColorValue($_POST['colorValue']);
-
-			$this->saveTaxonomyAssignments();
+														
 			return 0;
 		}
 		else
@@ -213,7 +194,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * 
 	 * @param boolean	show only the question instead of embedding page (true/false)
 	 */
-	function getPreview($show_question_only = false, $showInlineFeedback = false)
+	function getPreview($show_question_only = FALSE)
 	{		
 		global $tpl;			
 		$plugin       = $this->object->getPlugin();		
@@ -271,6 +252,24 @@ class assPaintQuestionGUI extends assQuestionGUI
 		return $questionoutput;
 	}
 
+	/**
+	 * Show the question in Test mode
+	 * (called from ilTestOutputGUI)
+	 * 
+	 * @param string $formaction			The action link for the form
+	 * @param integer $active_id			The active user id
+	 * @param integer $pass					The test pass
+	 * @param boolean $is_postponed			Question is postponed
+	 * @param boolean $use_post_solutions	Use post solutions
+	 * @param boolean $show_feedback		Show a feedback
+	 */
+	function outQuestionForTest($formaction, $active_id, $pass = NULL, $is_postponed = FALSE, $use_post_solutions = FALSE, $show_feedback = FALSE)
+	{		
+		$test_output = $this->getTestOutput($active_id, $pass, $is_postponed, $use_post_solutions, $show_feedback); 
+		$this->tpl->setVariable("QUESTION_OUTPUT", $test_output);
+		$this->tpl->setVariable("FORMACTION", $formaction);	
+	}
+	
 	/**
 	 * Get the HTML output of the question for a test
 	 * 
@@ -402,7 +401,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("solution.html");
+		$template     = $plugin->getTemplate("solution.html");		
 		$output = $this->object->getQuestion();			
 		
 		if ($show_correct_solution)
@@ -413,39 +412,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}			
 		else
 			$template->setVariable("ID", $this->object->getId());		
-
-		//get background and save in var
+		
 		if ($this->object->getImageFilename())
-		{
-			$pathToImage = $this->object->getImagePath().$this->object->getImageFilename();
-
-			list ( $width, $height, $type ) = getimagesize ( $pathToImage );
-			
-			switch ( $type )
-			{
-				case 1:
-					$background = imagecreatefromgif ($pathToImage);
-					break;
-				case 2:
-					$background = imagecreatefromjpeg ($pathToImage);
-					break;
-				case 3:
-					$background = imagecreatefrompng ($pathToImage);
-			} 
-			//predefine picture in case no drawing exists -> show only background image
-			ob_start();
-			imagepng($background);
-			$image = ob_get_clean();
-			$base64 = base64_encode( $image );	
-		} else 
-		{
-			//transparent pixel, no background
-			//will be overwritten if drawing exists
-			$base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
-		}
-		//preset formular
-		$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));
-
+			$template->setVariable("BACKGROUND", "background:url(".$this->object->getImagePathWeb().$this->object->getImageFilename()."); background-size:100% 100%;");	
 		
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
@@ -468,50 +437,15 @@ class assPaintQuestionGUI extends assQuestionGUI
 		
 		foreach ($user_solution as $solution)
 		{				
-				
+				$base64 = "";
 				if ($user_solution[0]["value2"])
 				{
 					$content = file_get_contents ( $user_solution[0]["value2"]);
-
-					//merge background and drawing if backgroundimage available
-					if( $this->object->getImageFilename() )
-					{
-						$drawing = imagecreatefromstring($content);
-
-						$x1 = imagesx($background);
-						$y1 = imagesy($background);
-						$x2 = imagesx($drawing);
-						$y2 = imagesy($drawing);
-
-						imagecopyresampled(
-							$background, $drawing,
-							0, 0, 0, 0,
-							$x1, $y1,
-							$x2, $y2);
-
-						ob_start();
-						//resizing the picture to custom values
-						if ($this->object->getRadioOption() == "radioOwnSize")
-						{
-							$resized=imagecreatetruecolor($this->object->getCanvasWidth(),$this->object->getCanvasHeight());
-							imagecopyresampled($resized,$background,0,0,0,0,$this->object->getCanvasWidth(),$this->object->getCanvasHeight(),$x1,$y1);
-							imagepng($resized);
-						} else //use original background
-						{
-							imagepng($background);			
-						}
-						$image = ob_get_clean();
-						$base64 = base64_encode( $image );
-						imagedestroy($background);  
-						imagedestroy($drawing);
-					} else //only use the drawing
-					{
-						$base64 = base64_encode( $content );
-					} 
-				}
+					$base64 = 'data:image/png;base64,'.base64_encode( $content );
+				}				
 				$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));		
 		}		
-
+		
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
 		
 		if ($result_output)
@@ -527,17 +461,25 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$solutiontemplate = new ilTemplate("tpl.il_as_tst_solution_output.html",TRUE, TRUE, "Modules/TestQuestionPool");
 		$questionoutput = $template->get();
 
-		$feedback = ($show_feedback) ? $this->getGenericFeedbackOutput($active_id, $pass) : "";
-		if (strlen($feedback)) $solutiontemplate->setVariable("FEEDBACK", $this->object->prepareTextareaOutput( $feedback, true ));
+		$feedback = '';
+		if($show_feedback)
+		{
+			$fb = $this->getGenericFeedbackOutput($active_id, $pass);
+			$feedback .=  strlen($fb) ? $fb : '';
+			
+			$fb = $this->getSpecificFeedbackOutput($active_id, $pass);
+			$feedback .=  strlen($fb) ? $fb : '';
+		}
+		if (strlen($feedback)) $solutiontemplate->setVariable("FEEDBACK", $this->object->prepareTextareaOutput($feedback, true));
 		
 		$solutiontemplate->setVariable("SOLUTION_OUTPUT", $questionoutput);
 
 		$solutionoutput = $solutiontemplate->get(); 
 		
-		if(!$show_question_only)
+		if (!$show_question_only)
 		{
 			// get page object output
-			$solutionoutput = $this->getILIASPage($solutionoutput);
+			$solutionoutput = '<div class="ilc_question_Standard">'.$solutionoutput.'</div>';
 		}
 		
 		return $solutionoutput;
@@ -565,7 +507,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	{
 		global $rbacsystem, $ilTabs;
 
-		$this->ctrl->setParameterByClass("ilAssQuestionPageGUI", "q_id", $_GET["q_id"]);
+		$this->ctrl->setParameterByClass("ilpageobjectgui", "q_id", $_GET["q_id"]);
 		include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
 		$q_type = $this->object->getQuestionType();
 
@@ -582,16 +524,16 @@ class assPaintQuestionGUI extends assQuestionGUI
 			{
 				// edit page
 				$ilTabs->addTarget("edit_content",
-					$this->ctrl->getLinkTargetByClass("ilAssQuestionPageGUI", "edit"),
+					$this->ctrl->getLinkTargetByClass("ilPageObjectGUI", "edit"),
 					array("edit", "insert", "exec_pg"),
 					"", "", $force_active);
 			}
 
 			// edit page
 			$ilTabs->addTarget("preview",
-				$this->ctrl->getLinkTargetByClass("ilAssQuestionPageGUI", "preview"),
+				$this->ctrl->getLinkTargetByClass("ilPageObjectGUI", "preview"),
 				array("preview"),
-				"ilAssQuestionPageGUI", "", $force_active);
+				"ilPageObjectGUI", "", $force_active);
 		}
 
 		$force_active = false;
@@ -621,7 +563,6 @@ class assPaintQuestionGUI extends assQuestionGUI
 				),
 				$classname, "", $force_active);						
 		}
-		/*
 		if($_GET["q_id"])
 		{
 			$ilTabs->addTarget("feedback",
@@ -629,9 +570,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 				array("feedback", "saveFeedback"),
 				$classname, "");
 		}
-		*/
-		// add tab for question feedback within common class assQuestionGUI
-        $this->addTab_QuestionFeedback($ilTabs);
+		
 		// add tab for question hint within common class assQuestionGUI
 		$this->addTab_QuestionHints($ilTabs);
 
@@ -679,6 +618,97 @@ class assPaintQuestionGUI extends assQuestionGUI
 	public function getSpecificFeedbackOutput($active_id, $pass)
 	{
 		return "";
+	}
+	
+	public function getAnswerFeedbackOutput($active_id, $pass)
+	{
+		include_once "./Modules/Test/classes/class.ilObjTest.php";
+		$manual_feedback = ilObjTest::getManualFeedback($active_id, $this->object->getId(), $pass);
+		if (strlen($manual_feedback))
+		{
+			return $manual_feedback;
+		}
+		$correct_feedback = $this->object->getFeedbackGeneric(1);
+		$incorrect_feedback = $this->object->getFeedbackGeneric(0);
+		if (strlen($correct_feedback.$incorrect_feedback))
+		{
+			$reached_points = $this->object->calculateReachedPoints($active_id, $pass);
+			$max_points = $this->object->getMaximumPoints();
+			if ($reached_points == $max_points)
+			{
+				$output .= $correct_feedback;
+			}
+			else
+			{
+				$output .= $incorrect_feedback;
+			}
+		}
+		$test = new ilObjTest($this->object->active_id);
+		return $this->object->prepareTextareaOutput($output, TRUE);		
+	}
+	
+	/**
+	* Creates the output of the feedback page for a TemplateQuestion question
+	*
+	* @access public
+	*/
+	function feedback($checkonly = false)
+	{		
+		$save = (strcmp($this->ctrl->getCmd(), "saveFeedback") == 0) ? TRUE : FALSE;
+		include_once("./Services/Form/classes/class.ilPropertyFormGUI.php");
+		$form = new ilPropertyFormGUI();
+		$form->setFormAction($this->ctrl->getFormAction($this));
+		$form->setTitle('feedback_answers');
+		$form->setTableWidth("100%");
+		$form->setId("feedback");
+
+		$complete = new ilTextAreaInputGUI("feedback_complete_solution", "feedback_complete");
+		$complete->setValue($this->object->prepareTextareaOutput($this->object->getFeedbackGeneric(1)));
+		$complete->setRequired(false);
+		$complete->setRows(10);
+		$complete->setCols(80);
+		if (!$this->getPreventRteUsage())
+		{
+			$complete->setUseRte(true);
+		}
+		include_once "./Services/AdvancedEditing/classes/class.ilObjAdvancedEditing.php";
+		$complete->setRteTags(ilObjAdvancedEditing::_getUsedHTMLTags("assessment"));
+		$complete->addPlugin("latex");
+		$complete->addButton("latex");
+		$complete->addButton("pastelatex");
+		$complete->setRTESupport($this->object->getId(), "qpl", "assessment", null, false, '3.4.7');
+		$form->addItem($complete);
+
+		$incomplete = new ilTextAreaInputGUI("feedback_incomplete_solution", "feedback_incomplete");
+		$incomplete->setValue($this->object->prepareTextareaOutput($this->object->getFeedbackGeneric(0)));
+		$incomplete->setRequired(false);
+		$incomplete->setRows(10);
+		$incomplete->setCols(80);
+		if (!$this->getPreventRteUsage())
+		{
+			$incomplete->setUseRte(true);
+		}
+		include_once "./Services/AdvancedEditing/classes/class.ilObjAdvancedEditing.php";
+		$incomplete->setRteTags(ilObjAdvancedEditing::_getUsedHTMLTags("assessment"));
+		$incomplete->addPlugin("latex");
+		$incomplete->addButton("latex");
+		$incomplete->addButton("pastelatex");
+		$incomplete->setRTESupport($this->object->getId(), "qpl", "assessment", null, false, '3.4.7');
+		$form->addItem($incomplete);
+
+		global $ilAccess;
+		if ($ilAccess->checkAccess("write", "", $_GET['ref_id']) || $this->getSelfAssessmentEditingMode())
+		{
+			$form->addCommandButton("saveFeedback", "save");
+		}
+		if ($save)
+		{
+			$form->setValuesByPost();
+			$errors = !$form->checkInput();
+			$form->setValuesByPost(); // again, because checkInput now performs the whole stripSlashes handling and we need this if we don't want to have duplication of backslashes
+		}
+		if (!$checkonly) $this->tpl->setVariable("ADM_CONTENT", $form->getHTML());
+		return $errors;
 	}
 }
 ?>

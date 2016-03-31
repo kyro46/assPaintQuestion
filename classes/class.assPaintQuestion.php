@@ -12,18 +12,18 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  */
 class assPaintQuestion extends assQuestion
 {
-	private $plugin = null;	
-	// backgroundimage	
+	private $plugin;	
+	// backgroundImage	
 	var $image_filename = "";
-	// brushsize choosable? false - 0, true - 1
+	// stift breite veraenderlich? false - 0, true - 1
 	var $lineValue = 0;
-	// colourselection enabled? false - 0, true - 1
+	// farben benutzen? false - 0, true - 1
 	var $colorValue = 0;	
-	// canvas size for backgroundimage or individual
+	// canvas size nach hintergrundbild oder eigene angaben?
 	var $radioOption = 'radioImageSize';
-	// canvas width
+	// canvas breite
 	var $canvasWidth = 100;
-	// canvas height
+	// canvas hoehe
 	var $canvasHeight = 100;
 	
 	/**
@@ -47,10 +47,8 @@ class assPaintQuestion extends assQuestion
 		$question = ""	
 	)
 	{
-		// needed for excel export
-		$this->getPlugin()->loadLanguageModule();
-		
 		parent::__construct($title, $comment, $author, $owner, $question);		
+		$this->plugin = null;
 	}
 	
 	/**
@@ -66,15 +64,14 @@ class assPaintQuestion extends assQuestion
 	}
 	
 	/**
-	 * Returns true, if the question is complete
-	 *
-	 * @return boolean True, if the question is complete for use, otherwise false
-	 */
-	public function isComplete()
+	* Returns true, if question is complete for use
+	*
+	* @return boolean True, if the TemplateQuestion question is complete for use, otherwise false
+	* @access public
+	*/
+	function isComplete()
 	{
-		// Please add here your own check for question completeness
-		// The parent function will always return false
-		if(($this->title) and ($this->author) and ($this->question) and ($this->getMaximumPoints() >= 0))
+		if ( (strlen($this->getTitle())) and ($this->author) and ($this->question) and ($this->getMaximumPoints() >= 0) )
 		{
 			return true;
 		}
@@ -86,14 +83,14 @@ class assPaintQuestion extends assQuestion
 	
 	function getImageFilename()
 	{
-		// backgroundimage
+		// backgroundImage
 		return $this->image_filename;
 	}
 	
 	function deleteImage()
 	{
 		$file = $this->getImagePath() . $this->getImageFilename();
-		@unlink($file); // delete image from folder
+		@unlink($file); // loescht image aus ordner
 		$this->image_filename = "";
 	}
 	
@@ -185,35 +182,37 @@ class assPaintQuestion extends assQuestion
 	}
 	
 	/**
-	 * Loads a question object from a database
-	 * This has to be done here (assQuestion does not load the basic data)!
-	 *
-	 * @param integer $question_id A unique key which defines the question in the database
-	 * @see assQuestion::loadFromDb()
-	 */
-	public function loadFromDb($question_id)
+	* Load a assPaintQuestion object from a database
+	*
+	* @param object $db A pear DB object
+	* @param integer $question_id A unique key which defines the TemplateQuestion test in the database
+	* @access public
+	*/
+	function loadFromDb($question_id)
 	{
-		global $ilDB;
-                
-		// load the basic question data
-		$result = $ilDB->query("SELECT qpl_questions.* FROM qpl_questions WHERE question_id = "
-				. $ilDB->quote($question_id, 'integer'));
+		global $ilDB;					
 
-		$data = $ilDB->fetchAssoc($result);
-		$this->setId($question_id);
-		$this->setTitle($data["title"]);
-		$this->setComment($data["description"]);
-		$this->setSuggestedSolution($data["solution_hint"]);
-		$this->setOriginalId($data["original_id"]);
-		$this->setObjId($data["obj_fi"]);
-		$this->setAuthor($data["author"]);
-		$this->setOwner($data["owner"]);
-		$this->setPoints($data["points"]);		
+		$result = $ilDB->queryF("SELECT qpl_questions.* FROM qpl_questions WHERE question_id = %s",
+			array('integer'),
+			array($question_id)
+		);
+		if($ilDB->numRows($result) == 1)
+		{
+			$data = $ilDB->fetchAssoc($result);
+			$this->setId($question_id);
+			$this->setObjId($data["obj_fi"]);
+			$this->setTitle($data["title"]);
+			$this->setComment($data["description"]);
+			//$this->setSuggestedSolution($data["solution_hint"]);
+			$this->setOriginalId($data["original_id"]);			
+			$this->setAuthor($data["author"]);
+			$this->setOwner($data["owner"]);
+			$this->setPoints($data["points"]);			
 
-		include_once("./Services/RTE/classes/class.ilRTE.php");
-		$this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data["question_text"], 1));
-		$this->setEstimatedWorkingTime(substr($data["working_time"], 0, 2), substr($data["working_time"], 3, 2), substr($data["working_time"], 6, 2));			
-
+			include_once("./Services/RTE/classes/class.ilRTE.php");
+			$this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data["question_text"], 1));
+			$this->setEstimatedWorkingTime(substr($data["working_time"], 0, 2), substr($data["working_time"], 3, 2), substr($data["working_time"], 6, 2));			
+		}
 		// load backgroundImage
 		$resultImage= $ilDB->queryF("SELECT image_file FROM il_qpl_qst_paint_image WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultImage) == 1)
@@ -228,22 +227,12 @@ class assPaintQuestion extends assQuestion
 			$data = $ilDB->fetchAssoc($resultCheck);
 			if ($data["line"]==1)
 				$this->lineValue = 1;
-			else $this->lineValue = 0;
 			$this->colorValue = $data["color"];
 			$this->setRadioOption($data["radio_option"]);
 			$this->setCanvasWidth($data["width"]);
 			$this->setCanvasHeight($data["height"]);
 		}
 				
-		try
-		{
-			$this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
-		}
-		catch(ilTestQuestionPoolException $e)
-		{
-		}
-
-		// loads additional stuff like suggested solutions
 		parent::loadFromDb($question_id);
 	}	
 
@@ -289,7 +278,7 @@ class assPaintQuestion extends assQuestion
 				)
 		);
 			
-		parent::saveToDb();
+		parent::saveToDb($original_id);
 	}
 
 	/**
@@ -302,11 +291,10 @@ class assPaintQuestion extends assQuestion
 		return $this->points;
 	}
 
-/**
-* Duplicates an assPaintQuestion
-*
-* @access public
-*/
+	/**
+	* Duplicates an assPaintQuestion	
+	* @access public
+	*/
 	function duplicate($for_test = true, $title = "", $author = "", $owner = "", $testObjId = null)
 	{
 		if ($this->id <= 0)
@@ -357,12 +345,15 @@ class assPaintQuestion extends assQuestion
 		$clone->copyPageOfQuestion($this_id);
 		// copy XHTML media objects
 		$clone->copyXHTMLMediaObjectsOfQuestion($this_id);
+		// duplicate the generic feedback
+		$clone->duplicateGenericFeedback($this_id);
+		
 		// duplicate the image
-		$clone->duplicateImage($this_id, $thisObjId);
-		
-		$clone->onDuplicate($thisObjId, $this_id, $clone->getObjId(), $clone->getId());
-		
-		return $clone->id;
+		$clone->duplicateImage($this_id, $thisObjId);		
+
+		$clone->onDuplicate($this_id);
+
+		return $clone->getId();
 	}
 
 	/**
@@ -370,20 +361,19 @@ class assPaintQuestion extends assQuestion
 	*
 	* @access public
 	*/
-	function copyObject($target_questionpool_id, $title = "")
+	function copyObject($target_questionpool, $title = "")
 	{
-		if ($this->id <= 0)
+		if ($this->getId() <= 0)
 		{
 			// The question has not been saved. It cannot be duplicated
 			return;
 		}
-		// duplicate the question in database
 		$clone = $this;
 		include_once ("./Modules/TestQuestionPool/classes/class.assQuestion.php");
-		$original_id = assQuestion::_getOriginalId($this->id);
+		$original_id = assQuestion::_getOriginalId($this->getId());
 		$clone->id = -1;
-		$source_questionpool_id = $this->getObjId();
-		$clone->setObjId($target_questionpool_id);
+		$source_questionpool = $this->getObjId();
+		$clone->setObjId($target_questionpool);
 		if ($title)
 		{
 			$clone->setTitle($title);
@@ -394,38 +384,18 @@ class assPaintQuestion extends assQuestion
 		$clone->copyPageOfQuestion($original_id);
 		// copy XHTML media objects
 		$clone->copyXHTMLMediaObjectsOfQuestion($original_id);
-		// duplicate the image
-		$clone->copyImage($original_id, $source_questionpool_id);
-		
-		$clone->onCopy($source_questionpool_id, $original_id, $clone->getObjId(), $clone->getId());
-		
-		return $clone->id;
-	}
+		// duplicate the generic feedback
+		$clone->duplicateGenericFeedback($original_id);
 
-	function duplicateImage($question_id, $objectId = null)
-	{
-		$imagepath = $this->getImagePath();
-		$imagepath_original = str_replace("/$this->id/images", "/$question_id/images", $imagepath);
-		
-		if( (int)$objectId > 0 )
-		{
-			$imagepath_original = str_replace("/$this->obj_id/", "/$objectId/", $imagepath_original);
-		}
-		
-		if (!file_exists($imagepath)) {
-			ilUtil::makeDirParents($imagepath);
-		}
-		$filename = $this->getImageFilename();
-		
-		if (!empty($filename)) {
-			if (!copy($imagepath_original . $filename, $imagepath . $filename)) {
-				print "Image could not be duplicated.";
-			}
-		}
-	}
+		// copy Image
+		$clone->copyImage($original_id, $source_questionpool);		
 
+		$clone->onCopy($this->getObjId(), $this->getId());
+		return $clone->getId();
+	}
+	
 	function copyImage($question_id, $source_questionpool)
-	{
+	{				
 		$imagepath = $this->getImagePath();
 		$imagepath_original = str_replace("/$this->id/images", "/$question_id/images", $imagepath);
 		$imagepath_original = str_replace("/$this->obj_id/", "/$source_questionpool/", $imagepath_original);
@@ -434,12 +404,30 @@ class assPaintQuestion extends assQuestion
 			ilUtil::makeDirParents($imagepath);
 		}
 		$filename = $this->getImageFilename();
-		
 		if (!copy($imagepath_original . $filename, $imagepath . $filename)) 
 		{
-			print "Image could not be copied.";
+			print "image could not be copied!!!! ";
 		}
 	}
+	
+	function duplicateImage($question_id, $objectId = null)
+	{						
+		$imagepath = $this->getImagePath();
+		$imagepath_original = str_replace("/$this->id/images", "/$question_id/images", $imagepath);		
+		
+		if( (int)$objectId > 0 )
+		{
+			$imagepath_original = str_replace("/$this->obj_id/", "/$objectId/", $imagepath_original);
+		}		
+		if (!file_exists($imagepath)) {
+			ilUtil::makeDirParents($imagepath);
+		}
+		$filename = $this->getImageFilename();
+		if (!copy($imagepath_original . $filename, $imagepath . $filename)) {
+			print "image could not be duplicated!!!! ";
+		}
+	}
+
 	/**
 	 * Returns the points, a learner has reached answering the question
 	 * The points are calculated from the given answers including checks
@@ -450,7 +438,7 @@ class assPaintQuestion extends assQuestion
 	 * @param boolean $returndetails (deprecated !!)
 	 * @access public
 	 */
-	function calculateReachedPoints($active_id, $pass = NULL, $authorizedSolution = true, $returndetails = false)
+	function calculateReachedPoints($active_id, $pass = NULL, $returndetails = FALSE)
 	{
 		global $ilDB;
 		
@@ -499,7 +487,7 @@ class assPaintQuestion extends assQuestion
 	* @access public
 	* @see $answers
 	*/
-	function saveWorkingData($active_id, $pass = NULL, $authorized = true)
+	function saveWorkingData($active_id, $pass = NULL)
 	{
 		global $ilDB;
 		global $ilUser;
