@@ -32,7 +32,7 @@ input[disabled] {
 <input class="submit" type="button" name="clear" value="{CLEAR_ALL}" onclick="paintTask.clear(); return false;">          
 <br><br>
 <!-- Eigentliches Zeichenfenster -->
-<div style="width:{WIDTH}px; height:{HEIGHT}px; border:1px solid #000000; overflow:auto;">
+<div style="width:{WIDTH}px; height:{HEIGHT}px; solid #000000; overflow:auto;">
 	<!-- resize:both; overflow:auto;  nur im Firefox?-->
 	<!-- BACKGROUND ist das Hintergrundbild zur Aufgabe sofern eines angegeben wurde -->
 	<canvas id="paintCanvas" width="{WIDTH}" height="{HEIGHT}" style="vertical-align: bottom; {BACKGROUND} cursor: crosshair;">Kein Canvas unterstüzt!</canvas>	
