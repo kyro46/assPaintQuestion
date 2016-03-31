@@ -22,6 +22,10 @@ git clone https://github.com/kyro46/assPaintQuestion.git
 ```  
 and activate it in the ILIAS-Admin-GUI. Manual correction has to be enabled for this question type.
 
+### Known Problems ###
+
+* Due to a Bug in ILIAS 5.1, the PDF-Archive for Tests is no longer usable. This affects this Questiontype as well.
+
 ### Credits ###
 * Development of plugin-draft for ILIAS 4.4 by Yves Annanias, University Halle, 2014
 * Further development by Christoph Jobst, University Halle, 2014/2015/2016
