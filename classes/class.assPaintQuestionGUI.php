@@ -179,8 +179,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		{
 			$this->writeQuestionGenericPostData();
 			
-			$this->object->setPoints($_POST["points"]);									
-						
+			$this->object->setPoints( str_replace( ",", ".", $_POST["points"] ));
+									
 			if ($_POST['imagefile_delete'])						
 			{
 				$this->object->deleteImage();
