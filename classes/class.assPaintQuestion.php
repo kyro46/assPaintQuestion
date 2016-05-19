@@ -74,7 +74,7 @@ class assPaintQuestion extends assQuestion
 	{
 		// Please add here your own check for question completeness
 		// The parent function will always return false
-		if(($this->title) and ($this->author) and ($this->question) and ($this->getMaximumPoints() >= 0))
+		if(($this->title) and ($this->author) and ($this->question) and ($this->getMaximumPoints() > 0))
 		{
 			return true;
 		}
