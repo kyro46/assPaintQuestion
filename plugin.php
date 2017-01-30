@@ -8,8 +8,8 @@ $version = "1.1.8";
  
 // ilias min and max version; must always reflect the versions that should
 // run with the plugin
-$ilias_min_version = "5.1.0";
-$ilias_max_version = "5.1.999";
+$ilias_min_version = "5.2.0";
+$ilias_max_version = "5.2.999";
 
 //09/2014:
 //$responsible = "Yves Annanias";
@@ -17,6 +17,6 @@ $ilias_max_version = "5.1.999";
 
 //10/2014-...
 $responsible = "Christoph Jobst";
-$responsible_mail = "christoph.jobst@llz.uni-halle.de";
+$responsible_mail = "cjobst@wifa.uni-leipzig.de";
 
 ?>
