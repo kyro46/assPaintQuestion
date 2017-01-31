@@ -74,7 +74,9 @@ function PaintTask(resumeImage){
             //button.value = "paint";            
             document.getElementById('erase').disabled = true;
             document.getElementById('paint').disabled = false;
-            divEraseIcon.style.display = 'inline-block';
+            
+            //don't show this for now, a crossair might be enough
+            //divEraseIcon.style.display = 'inline-block';
             erase = true;
         }
     }  

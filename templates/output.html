@@ -7,7 +7,7 @@ input[disabled] {
 </style>
 <p>{QUESTIONTEXT}</p>
 <!-- Zeige Auswahlfeld fuer Linienstaerke -->
-<label style="{DISPLAY_LINE} float:left;" for="selWidth">{LINESELECT}&nbsp;</label> 
+<label class="std" style="{DISPLAY_LINE}" for="selWidth">{LINESELECT}&nbsp;</label> 
 <select id="selWidth" style="border-radius: 4px; border: 1px solid rgb(170, 170, 170); padding: 2px; {DISPLAY_LINE}">
 	<option value="1">1</option>
 	<option selected="selected" value="3">3</option>
@@ -17,7 +17,7 @@ input[disabled] {
 	<option value="12">12</option>
 </select>        
 <!-- Zeige Auswahlfeld fuer Linienfarbe -->
-<label style="{DISPLAY_COLOR}" for="selColor">{COLORSELECT}&nbsp;</label>
+<label class="std" style="{DISPLAY_COLOR}" for="selColor">{COLORSELECT}&nbsp;</label>
 <select id="selColor" style="border-radius: 4px; border: 1px solid rgb(170, 170, 170); padding: 2px; {DISPLAY_COLOR}">
 	<option selected="selected" value="black">{BLACK}</option>
 	<option value="blue">{BLUE}</option>            
@@ -26,16 +26,17 @@ input[disabled] {
 	<option value="red">{RED}</option>
 	<option value="yellow">{YELLOW}</option>                
 </select>        
-<input class="submit" type="button" name="undo" value="{UNDO}" onclick="paintTask.undo(); return false;">
-<input class="submit" type="button" name="redo" value="{REDO}" onclick="paintTask.redo(); return false;">        
-<input class="submit" type="button" name="paint" id="paint" value="{PAINT}" onclick="paintTask.erasePaint(this); return false;" disabled /><input class="submit" type="button" name="erase" id="erase" value="{ERASE}" onclick="paintTask.erasePaint(this); return false;" />
-<input class="submit" type="button" name="clear" value="{CLEAR_ALL}" onclick="paintTask.clear(); return false;">          
+<input class="btn btn-default" type="button" name="undo" value="{UNDO}" onclick="paintTask.undo(); return false;">
+<input class="btn btn-default" type="button" name="redo" value="{REDO}" onclick="paintTask.redo(); return false;">        
+<input class="btn btn-default" type="button" name="paint" id="paint" value="{PAINT}" onclick="paintTask.erasePaint(this); return false;" disabled />
+<input class="btn btn-default" type="button" name="erase" id="erase" value="{ERASE}" onclick="paintTask.erasePaint(this); return false;" />
+<input class="btn btn-default" type="button" name="clear" value="{CLEAR_ALL}" onclick="paintTask.clear(); return false;">          
 <br><br>
 <!-- Eigentliches Zeichenfenster -->
-<div style="width:{WIDTH}px; height:{HEIGHT}px;  outline: solid #000000"; overflow:auto;">
+<div style="width:{WIDTH}px; height:{HEIGHT}px;  outline: solid #000000">
 	<!-- resize:both; overflow:auto;  nur im Firefox?-->
 	<!-- BACKGROUND ist das Hintergrundbild zur Aufgabe sofern eines angegeben wurde -->
-	<canvas id="paintCanvas" width="{WIDTH}" height="{HEIGHT}" style="vertical-align: bottom; {BACKGROUND} cursor: crosshair;">Kein Canvas unterstüzt!</canvas>	
+	<canvas id="paintCanvas" width="{WIDTH}" height="{HEIGHT}" style="vertical-align: bottom; {BACKGROUND} cursor: crosshair;" >Kein Canvas unterst&uuml;tzt!</canvas>	
 </div>  
 <!-- Zeigt Bereich, der geloescht werden soll -->
 <div id="eraseIcon" style="width:10px; height:10px; background: black; pointer-events:none; position: absolute; display: none;"></div>

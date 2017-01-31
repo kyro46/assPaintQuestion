@@ -2,10 +2,10 @@ questionType#:#PaintQuestion
 points#:#Points
 save#:#Save
 errorInput#:#Invalid input
-image#:#Background Image
-color#:#Allow different Colors
+image#:#Background image
+color#:#Allow different colors
 line#:#Allow different line size
-lineSelect#:#Line width:
+lineSelect#:#Brush size:
 colorSelect#:#Color:
 black#:#black
 blue#:#blue
@@ -13,11 +13,11 @@ gray#:#gray
 green#:#green
 red#:#red
 yellow#:#yellow
-undo#:#undo
-redo#:#redo
-paint#:#paint
-erase#:#erase
-clearAll#:#clear all
+undo#:#Undo
+redo#:#Redo
+paint#:#Paint
+erase#:#Erase
+clearAll#:#Clear all
 canvasArea#:#Canvas size
 useImageSize#:#Use size of background image (800 x 700 if there is no image)
 useOwnSize#:#Use own size
