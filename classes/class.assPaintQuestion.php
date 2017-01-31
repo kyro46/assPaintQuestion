@@ -654,19 +654,25 @@ class assPaintQuestion extends assQuestion
 	* @param array $eval_data Cumulated evaluation data
 	* @access public
 	*/
-	public function setExportDetailsXLS(&$worksheet, $startrow, $active_id, $pass, &$format_title, &$format_bold)
+	public function setExportDetailsXLS($worksheet, $startrow, $active_id, $pass)
 	{	
+		
+		parent::setExportDetailsXLS($worksheet, $startrow, $active_id, $pass);
+		
+		//BASE64-String in Excel won't make much sense, so leave the qst
+		/*
 		include_once ("./Services/Excel/classes/class.ilExcelUtils.php");
 		$solution = $this->getSolutionValues($active_id, $pass);
 		$worksheet->writeString($startrow, 0, ilExcelUtils::_convert_text($this->lng->txt($this->getQuestionType())), $format_title);
 		$worksheet->writeString($startrow, 1, ilExcelUtils::_convert_text($this->getTitle()), $format_title);
 		$i = 1;
-		/*
-		$worksheet->writeString($startrow + $i, 0, $solutionvalue["value1"], $format_bold);
-		$worksheet->writeString($startrow + $i, 1, $solutionvalue["value2"]);		
-		$i++;					
+		
+		//$worksheet->writeString($startrow + $i, 0, $solutionvalue["value1"], $format_bold);
+		//$worksheet->writeString($startrow + $i, 1, $solutionvalue["value2"]);		
+		//$i++;					
 		*/
-		return $startrow + $i + 1;
+		
+		return $startrow + 1;
 	}	
 		
 	/**
