@@ -24,6 +24,7 @@ and activate it in the ILIAS-Admin-GUI. Manual correction has to be enabled for 
 
 ### Known Problems ###
 
+* gd-jpeg, libjpeg: recoverable error - Please check "gd.jpeg_ignore_warning" in your php.ini, see [PHP Docs](https://secure.php.net/manual/en/image.configuration.php)
 * Due to a Bug in ILIAS 5.1+, the PDF-Archive for Tests is no longer usable. This affects this Questiontype as well.
 
 ### Credits ###
