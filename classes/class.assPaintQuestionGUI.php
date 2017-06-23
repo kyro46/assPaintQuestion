@@ -90,12 +90,12 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$sizeWidth = new ilNumberInputGUI($plugin->txt("width"),"sizeWidth");
 		$sizeWidth->setValue($this->object->getCanvasWidth());		
 		$sizeWidth->setSize(6);
-		$sizeWidth->setMinValue(100);
+		$sizeWidth->setMinValue(450);
 		
 		$sizeHeight = new ilNumberInputGUI($plugin->txt("height"),"sizeHeight");
 		$sizeHeight->setValue($this->object->getCanvasHeight());
 		$sizeHeight->setSize(6);
-		$sizeHeight->setMinValue(100);
+		$sizeHeight->setMinValue(400);
 		
 		$ownSize->addSubItem($sizeWidth);
 		$ownSize->addSubItem($sizeHeight);
@@ -108,11 +108,13 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$form->addItem($line);
 		
 		// colourselection
+		/*Remove this option with version 1.1.10
 		$color = new ilCheckboxInputGUI($plugin->txt("color"), 'colorValue');
 		if ($this->object->getColorValue())
 			$color->setChecked(true);
 		$form->addItem($color);	
-			
+		*/
+		
 		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
 		//End Question specific
 		
@@ -217,14 +219,20 @@ class assPaintQuestionGUI extends assQuestionGUI
 	{		
 		global $tpl;			
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output.html");						
+		$template     = $plugin->getTemplate("output_dev.html");						
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($this->object->getQuestion(), TRUE));
-		if (!$this->object->getLineValue())
-			$template->setVariable("DISPLAY_LINE", "display:none;");			
+		if (!$this->object->getLineValue()) {
+			$template->setVariable("DISPLAY_LINE", "8");
+		} else {
+			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
+		}
+		/* Remove this option
 		if (!$this->object->getColorValue())
 			$template->setVariable("DISPLAY_COLOR", "display:none;");	
+		*/
 		if ($this->object->getImageFilename())
-			$template->setVariable("BACKGROUND", "background:url(".$this->object->getImagePathWeb().$this->object->getImageFilename()."); background-size:100% 100%;");	
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
+		/* Old language variables no longe in use
 		$template->setVariable("LINESELECT", $plugin->txt("lineSelect"));				
 		$template->setVariable("COLORSELECT", $plugin->txt("colorSelect"));				
 		$template->setVariable("BLACK", $plugin->txt("black"));				
@@ -238,6 +246,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$template->setVariable("PAINT", $plugin->txt("paint"));
 		$template->setVariable("ERASE", $plugin->txt("erase"));
 		$template->setVariable("CLEAR_ALL", $plugin->txt("clearAll"));
+		*/
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
 			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
@@ -248,8 +257,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 			{
 				$image = $this->object->getImagePath().$this->object->getImageFilename();
 				$size = getimagesize($image);
-				$template->setVariable("WIDTH", $size[0]);
-				$template->setVariable("HEIGHT", $size[1]);
+				$template->setVariable("WIDTH", $size[0] + 61);
+				$template->setVariable("HEIGHT", $size[1] + 31);
 			} else
 			{
 				$template->setVariable("WIDTH", 800);
@@ -257,7 +266,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 			}
 		}
 		
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/script.js');
+		$tpl->addCss("./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/literallycanvas.css");
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/react-0.14.3.js');
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/literallycanvas.js');		
 		
 		$template->setVariable("RESUME", "");
 		
