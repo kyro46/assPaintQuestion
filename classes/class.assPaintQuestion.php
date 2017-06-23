@@ -522,8 +522,9 @@ class assPaintQuestion extends assQuestion
 			)
 		);
 
-		$entered_values = false;		
-		$value = $_POST['answerImage'];		
+		$entered_values = false;	
+		$value1 = $_POST['answerJSON'];
+		$value2 = $_POST['answerImage'];		
 		
 		$result = $ilDB->queryF("SELECT test_fi FROM tst_active WHERE active_id = %s",
 			array('integer'),
@@ -536,7 +537,7 @@ class assPaintQuestion extends assQuestion
 			$test_id = $row["test_fi"];
 		}
 		
-		if (strlen($value) > 0)
+		if (strlen($value2) > 0)
 		{
 			$filename = $this->getFileUploadPath($test_id, $active_id).time()."_PaintTask.png";
 			$entered_values = true;
@@ -545,7 +546,7 @@ class assPaintQuestion extends assQuestion
 				"solution_id" => array("integer", $next_id),
 				"active_fi" => array("integer", $active_id),
 				"question_fi" => array("integer", $this->getId()),
-				"value1" => array("clob", 'path'),
+				"value1" => array("clob", $value1),
 				"value2" => array("clob", $filename),
 				"pass" => array("integer", $pass),
 				"tstamp" => array("integer", time())
@@ -560,7 +561,7 @@ class assPaintQuestion extends assQuestion
 			{
 				unlink($files[0]);
 			}						
-			$imageInfo = $value;
+			$imageInfo = $value2;
 			$image = fopen($imageInfo, 'r');
 			file_put_contents($filename, $image);
 			fclose($image);
