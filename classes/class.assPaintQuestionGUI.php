@@ -312,28 +312,19 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output.html");		
+		$template     = $plugin->getTemplate("output_dev.html");		
 		$output 	  = $this->object->getQuestion();
 		
-		if (!$this->object->getLineValue())
-			$template->setVariable("DISPLAY_LINE", "display:none;");			
+		if (!$this->object->getLineValue()) {
+			$template->setVariable("DISPLAY_LINE", "8");
+		} else {
+			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
+		}
 		if (!$this->object->getColorValue())
 			$template->setVariable("DISPLAY_COLOR", "display:none;");	
-		if ($this->object->getImageFilename())
-			$template->setVariable("BACKGROUND", "background:url(".$this->object->getImagePathWeb().$this->object->getImageFilename()."); background-size:100% 100%;");				
-		$template->setVariable("LINESELECT", $plugin->txt("lineSelect"));				
-		$template->setVariable("COLORSELECT", $plugin->txt("colorSelect"));				
-		$template->setVariable("BLACK", $plugin->txt("black"));				
-		$template->setVariable("BLUE", $plugin->txt("blue"));				
-		$template->setVariable("GRAY", $plugin->txt("gray"));
-		$template->setVariable("GREEN", $plugin->txt("green"));
-		$template->setVariable("RED", $plugin->txt("red"));
-		$template->setVariable("YELLOW", $plugin->txt("yellow"));
-		$template->setVariable("UNDO", $plugin->txt("undo"));
-		$template->setVariable("REDO", $plugin->txt("redo"));
-		$template->setVariable("PAINT", $plugin->txt("paint"));
-		$template->setVariable("ERASE", $plugin->txt("erase"));
-		$template->setVariable("CLEAR_ALL", $plugin->txt("clearAll"));
+			if ($this->object->getImageFilename())
+				$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
+
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
 			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
@@ -344,17 +335,19 @@ class assPaintQuestionGUI extends assQuestionGUI
 			{
 				$image = $this->object->getImagePath().$this->object->getImageFilename();
 				$size = getimagesize($image);
-				$template->setVariable("WIDTH", $size[0]);
-				$template->setVariable("HEIGHT", $size[1]);
+				$template->setVariable("WIDTH", $size[0] + 61);
+				$template->setVariable("HEIGHT", $size[1] + 31);
 			} else
 			{
 				$template->setVariable("WIDTH", 800);
 				$template->setVariable("HEIGHT", 700);
 			}
 		}
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/script.js');
-		//$tpl->addCss("./Services/COPage/css/content.css");	
-								
+		
+		$tpl->addCss("./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/literallycanvas.css");
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/react-0.14.3.js');
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/literallycanvas.js');
+		
 		// letzte gespeicherte Eingabe anzeigen
 		$base64 = "";
 		if ($user_solution[0]["value2"])
@@ -363,7 +356,10 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$content = file_get_contents ( $user_solution[0]["value2"]);
 			$base64 = 'data:image/png;base64,'.base64_encode( $content );
 		}							
-								
+		
+		if ($user_solution[0]["value2"] != 'path'){
+			$template->setVariable("RESUMEJSON", $user_solution[0]["value1"]);
+		}
 		$template->setVariable("RESUME", ilUtil::prepareFormOutput($base64));	
 		
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
