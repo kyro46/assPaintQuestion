@@ -1,0 +1,54 @@
+<p>{QUESTIONTEXT}</p>
+<style type="text/css">
+  .fs-container {
+    width: {WIDTH}px;
+    margin: auto;
+  }
+
+  .literally {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+</style>
+
+<div class="fs-container">
+  <div id="lc" style="height:{HEIGHT}px;"></div>
+</div>
+<textarea id="answerImage" name="answerImage" cols="50" rows="10"></textarea>
+<script type="text/javascript">
+	var backgroundImage = new Image();
+	backgroundImage.src =  "{BACKGROUND}";
+
+  	var lc = LC.init(document.getElementById("lc"), {
+	    imageURLPrefix: './Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/lc-images',
+	    toolbarPosition: 'bottom',
+	    defaultStrokeWidth: 2,
+	    strokeWidths: [1, 2, 3, 5, 30],
+	    backgroundShapes: [
+	        LC.createShape(
+	          'Image', {x: 0, y: 0, image: backgroundImage, scale: 1})
+	      ],
+	     tools: [
+	    	  LC.tools.Pencil,
+	    	  LC.tools.Eraser,
+	    	  LC.tools.Line,
+	    	  LC.tools.Rectangle,
+	    	  LC.tools.Ellipse,
+	    	  LC.tools.Text,
+	    	  LC.tools.SelectShape,
+	    	  LC.tools.Polygon,
+	    	  LC.tools.Eyedropper
+	    	],
+	     strokeWidths : [{DISPLAY_LINE}]
+	  });
+  
+    var textarea = document.getElementById("answerImage");
+	
+    var listen = lc.on('drawingChange', function() {
+		var base = lc.getImage().toDataURL(); 		
+		textarea.value = base; // als base64-string
+    });
+
+</script>
+    
