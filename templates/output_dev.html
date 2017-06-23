@@ -15,8 +15,11 @@
 <div class="fs-container">
   <div id="lc" style="height:{HEIGHT}px;"></div>
 </div>
-<textarea id="answerImage" name="answerImage" cols="50" rows="10"></textarea>
+<textarea id="answerJSON" name="answerJSON" cols="50" rows="10" style="display:none;">{RESUMEJSON}</textarea>
+<textarea id="answerImage" name="answerImage" cols="50" rows="10" style="display:none;">{RESUME}</textarea>
 <script type="text/javascript">
+
+	var loadJSON = '{RESUMEJSON}';
 	var backgroundImage = new Image();
 	backgroundImage.src =  "{BACKGROUND}";
 
@@ -24,12 +27,8 @@
 	    imageURLPrefix: './Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/lc-images',
 	    toolbarPosition: 'bottom',
 	    defaultStrokeWidth: 2,
-	    strokeWidths: [1, 2, 3, 5, 30],
-	    backgroundShapes: [
-	        LC.createShape(
-	          'Image', {x: 0, y: 0, image: backgroundImage, scale: 1})
-	      ],
-	     tools: [
+	    watermarkImage: backgroundImage,
+	    tools: [
 	    	  LC.tools.Pencil,
 	    	  LC.tools.Eraser,
 	    	  LC.tools.Line,
@@ -42,11 +41,19 @@
 	    	],
 	     strokeWidths : [{DISPLAY_LINE}]
 	  });
-  
+  	
+  	if (loadJSON != '/n' && loadJSON != 'path' && loadJSON != '') {
+  	  	lc.loadSnapshotJSON(loadJSON);
+  	}
+  	
+    var textareaJSON = document.getElementById("answerJSON");
     var textarea = document.getElementById("answerImage");
-	
+
     var listen = lc.on('drawingChange', function() {
-		var base = lc.getImage().toDataURL(); 		
+    	var JSON = lc.getSnapshotJSON();
+		var base = lc.getImage({rect: {x: 0, y: 0, width: {WIDTH}, height: {HEIGHT}},scale: 1, includeWatermark: false}).toDataURL(); 	
+		
+		textareaJSON.value = JSON;
 		textarea.value = base; // als base64-string
     });
 
