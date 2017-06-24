@@ -358,7 +358,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}							
 		
 		if ($user_solution[0]["value2"] != 'path'){
-			$template->setVariable("RESUMEJSON", $user_solution[0]["value1"]);
+			//$template->setVariable("RESUMEJSON", $user_solution[0]["value1"]);//str_replace('\\','\\\\',$user_solution[0]["value1"]));
+			
+			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",$user_solution[0]["value1"]));
 		}
 		$template->setVariable("RESUME", ilUtil::prepareFormOutput($base64));	
 		

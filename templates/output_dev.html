@@ -51,6 +51,8 @@
 
     var listen = lc.on('drawingChange', function() {
     	var JSON = lc.getSnapshotJSON();
+    	JSON = JSON.replace(/'/g, '\\"');
+    	
 		var base = lc.getImage({rect: {x: 0, y: 0, width: {WIDTH}, height: {HEIGHT}},scale: 1, includeWatermark: false}).toDataURL(); 	
 		
 		textareaJSON.value = JSON;
