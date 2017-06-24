@@ -320,15 +320,13 @@ class assPaintQuestionGUI extends assQuestionGUI
 		} else {
 			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
 		}
-		if (!$this->object->getColorValue())
-			$template->setVariable("DISPLAY_COLOR", "display:none;");	
-			if ($this->object->getImageFilename())
+		if ($this->object->getImageFilename())
 				$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
 
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
-			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
-			$template->setVariable("HEIGHT", $this->object->getCanvasHeight());
+			$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
+			$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
 		} else // radioImageSize
 		{
 			if( $this->object->getImageFilename() )
@@ -339,8 +337,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$template->setVariable("HEIGHT", $size[1] + 31);
 			} else
 			{
-				$template->setVariable("WIDTH", 800);
-				$template->setVariable("HEIGHT", 700);
+				$template->setVariable("WIDTH", 861);
+				$template->setVariable("HEIGHT", 731);
 			}
 		}
 		
@@ -358,8 +356,6 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}							
 		
 		if ($user_solution[0]["value2"] != 'path'){
-			//$template->setVariable("RESUMEJSON", $user_solution[0]["value1"]);//str_replace('\\','\\\\',$user_solution[0]["value1"]));
-			
 			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",$user_solution[0]["value1"]));
 		}
 		$template->setVariable("RESUME", ilUtil::prepareFormOutput($base64));	
