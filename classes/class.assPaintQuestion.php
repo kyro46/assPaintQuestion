@@ -455,8 +455,8 @@ class assPaintQuestion extends assQuestion
 	protected function getSolutionSubmit()
 	{
 		return array(
-				'value1' => ilUtil::stripSlashes($_POST['answerJSON']),
-				'value2' => ilUtil::stripSlashes($_POST['answerImage'])
+				'value1' => ilUtil::stripSlashes($_POST['answerJSON'."_qst_" . $this->getId()]),
+				'value2' => ilUtil::stripSlashes($_POST['answerImage'."_qst_" . $this->getId()])
 		);
 	}
 

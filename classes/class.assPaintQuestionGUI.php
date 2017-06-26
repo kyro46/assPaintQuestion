@@ -226,31 +226,16 @@ class assPaintQuestionGUI extends assQuestionGUI
 		} else {
 			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
 		}
-		/* Remove this option
-		if (!$this->object->getColorValue())
-			$template->setVariable("DISPLAY_COLOR", "display:none;");	
-		*/
+
+		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
+		
 		if ($this->object->getImageFilename())
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
-		/* Old language variables no longe in use
-		$template->setVariable("LINESELECT", $plugin->txt("lineSelect"));				
-		$template->setVariable("COLORSELECT", $plugin->txt("colorSelect"));				
-		$template->setVariable("BLACK", $plugin->txt("black"));				
-		$template->setVariable("BLUE", $plugin->txt("blue"));				
-		$template->setVariable("GRAY", $plugin->txt("gray"));
-		$template->setVariable("GREEN", $plugin->txt("green"));
-		$template->setVariable("RED", $plugin->txt("red"));
-		$template->setVariable("YELLOW", $plugin->txt("yellow"));
-		$template->setVariable("UNDO", $plugin->txt("undo"));
-		$template->setVariable("REDO", $plugin->txt("redo"));
-		$template->setVariable("PAINT", $plugin->txt("paint"));
-		$template->setVariable("ERASE", $plugin->txt("erase"));
-		$template->setVariable("CLEAR_ALL", $plugin->txt("clearAll"));
-		*/
+
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
-			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
-			$template->setVariable("HEIGHT", $this->object->getCanvasHeight());
+			$template->setVariable("WIDTH", $this->object->getCanvasWidth()+61);
+			$template->setVariable("HEIGHT", $this->object->getCanvasHeight()+31);
 			
 			$height = $this->object->getCanvasHeight();
 			if ($height < 400) {
@@ -334,6 +319,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 		} else {
 			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
 		}
+		
+		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
+		
 		if ($this->object->getImageFilename())
 				$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
 
