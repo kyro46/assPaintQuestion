@@ -22,9 +22,9 @@ class assPaintQuestion extends assQuestion
 	// canvas size for backgroundimage or individual
 	var $radioOption = 'radioImageSize';
 	// canvas width
-	var $canvasWidth = 100;
+	var $canvasWidth = 450;
 	// canvas height
-	var $canvasHeight = 100;
+	var $canvasHeight = 400;
 	
 	/**
 	* assPaintQuestion constructor

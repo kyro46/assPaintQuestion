@@ -144,7 +144,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	function save()
 	{	
 		$plugin = $this->object->getPlugin();
-		$result = $this->writePostData();
+		$result = $this->writeQuestionSpecificPostData();
 
 		if($result == 1)
 		{			
@@ -174,7 +174,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	* Evaluates a posted edit form and writes the form data in the question object	
 	* @return integer A positive value, if one of the required fields wasn't set, else 0
 	*/
-	function writePostData($always = false)
+	function writeQuestionSpecificPostData($always = false)
 	{
 		$hasErrors = (!$always) ? $this->editQuestion(true) : false;
 		if (!$hasErrors)
@@ -190,8 +190,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 			{
 				if (strlen($_FILES['imagefile']['tmp_name']))
 				{	
-					//if (file_exists($_FILES['imagefile']['tmp_name']))													
-					$this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);					
+					$this->object->deleteImage(); //Something (probably new) was uploaded - delete the old image
+					$this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);	
 				}	
 			}	
 			$this->object->setRadioOption($_POST["canvasArea"]);
@@ -251,6 +251,13 @@ class assPaintQuestionGUI extends assQuestionGUI
 		{
 			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
 			$template->setVariable("HEIGHT", $this->object->getCanvasHeight());
+			
+			$height = $this->object->getCanvasHeight();
+			if ($height < 400) {
+				$template->setVariable("HEIGHT_DIV", 400);
+			} else {
+				$template->setVariable("HEIGHT_DIV", $height);
+			}
 		} else // radioImageSize
 		{
 			if( $this->object->getImageFilename() )
@@ -259,6 +266,13 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$size = getimagesize($image);
 				$template->setVariable("WIDTH", $size[0] + 61);
 				$template->setVariable("HEIGHT", $size[1] + 31);
+				
+				$height = $size[1] + 31;
+				if ($height < 400) {
+					$template->setVariable("HEIGHT_DIV", 400);
+				} else {
+					$template->setVariable("HEIGHT_DIV", $height);
+				}
 			} else
 			{
 				$template->setVariable("WIDTH", 800);
