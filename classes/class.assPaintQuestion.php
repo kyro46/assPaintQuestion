@@ -25,6 +25,8 @@ class assPaintQuestion extends assQuestion
 	var $canvasWidth = 450;
 	// canvas height
 	var $canvasHeight = 400;
+	// resizedImageStatus needed for backward compatibility 0 -> needs to be created; 1 -> exists
+	var $resizedImageStatus = 0;
 	
 	/**
 	* assPaintQuestion constructor
@@ -92,12 +94,15 @@ class assPaintQuestion extends assQuestion
 	
 	function deleteImage()
 	{
+		global $ilDB;
+		
 		$file = $this->getImagePath() . $this->getImageFilename();
-		//$file_resized = $this->getImagePath() ."resized_".$this->getImageFilename();
+		$file_resized = $this->getImagePath() ."resized_".$this->getImageFilename();
 		
 		@unlink($file); // delete image from folder
-		//@unlink($file_resized);
+		@unlink($file_resized);
 		$this->image_filename = "";
+		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 0 .' '.'WHERE question_fi = '.$this->getId());
 	}
 	
 	function getLineValue()	
@@ -156,6 +161,15 @@ class assPaintQuestion extends assQuestion
 		return $this->canvasWidth;
 	}
 	
+	function setResizedImageStatus($value)
+	{
+		$this->$resizedImageStatus= $value;
+	}
+	
+	function getResizedImageStatus()
+	{
+		return $this->$resizedImageStatus;
+	}
 	/**
 	 * Set the image file name
 	 *
@@ -188,6 +202,8 @@ class assPaintQuestion extends assQuestion
 	}
 	
 	function resizeImage($width, $height){
+		
+		global $ilDB;
 		
 		error_log($this->getImagePath());
 		error_log($this->getImageFilename());
@@ -231,6 +247,8 @@ class assPaintQuestion extends assQuestion
 				case 3:
 					imagepng ($resized, $destination, 9);
 			}
+			
+			$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 1 .' '.'WHERE question_fi = '.$this->getId());
 	}
 	
 	
@@ -272,7 +290,7 @@ class assPaintQuestion extends assQuestion
 			$this->image_filename = $data["image_file"];
 		}		
 		
-		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
+		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultCheck) == 1)
 		{
 			$data = $ilDB->fetchAssoc($resultCheck);
@@ -283,6 +301,9 @@ class assPaintQuestion extends assQuestion
 			$this->setRadioOption($data["radio_option"]);
 			$this->setCanvasWidth($data["width"]);
 			$this->setCanvasHeight($data["height"]);
+			if ($data["resized"]==1)
+				$this->setResizedImageStatus(1);
+				else $this->setResizedImageStatus(0);
 		}
 				
 		try

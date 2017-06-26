@@ -1,10 +1,9 @@
 <p>{QUESTIONTEXT}</p>
-<div id="browseroutput" style="width:{WIDTH}px; height:{HEIGHT}px; outline: solid #000000;">
-<img id="solution" src="@{SOLUTION}" onerror="this.src = 'data:image/png;base64,' + this.src.substring(this.src.indexOf('@') + 1);" alt="Image Error" />
+<img id="solution" src="@{SOLUTION}" onerror="this.src = 'data:image/png;base64,' + this.src.substring(this.src.indexOf('@') + 1);" alt="Image Error" style="width:{WIDTH}px; height:{HEIGHT}px; outline: solid #000000;"/>
 <!--
 the solution.html template contains two versions for the img-tag
 @base64 is for tcpdf
 the scripted src-attribute is for normal browsers
 -->
-</div>
+<br/>
 <!-- BEGIN result_output --> <em>{RESULT_OUTPUT}</em><!-- END result_output -->

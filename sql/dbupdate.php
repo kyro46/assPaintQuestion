@@ -39,3 +39,17 @@
 	$ilDB->createTable("il_qpl_qst_paint_check", $fields);
 	$ilDB->addPrimaryKey("il_qpl_qst_paint_check", array("question_fi"));	
 ?>
+<#3>
+<?php
+	//Add information if scaled image exists - needed for backward compatibility
+    if(!$ilDB->tableColumnExists('il_qpl_qst_paint_check', 'resized'))
+    {
+        $ilDB->addTableColumn('il_qpl_qst_paint_check', 'resized', array(
+                'type' => 'integer',
+        		'length' => '1',
+        		'default' => 0,
+                'notnull' => false,
+            )
+        );
+    }
+?>

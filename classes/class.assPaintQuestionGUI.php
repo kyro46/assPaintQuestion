@@ -85,6 +85,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		//cancassize
 		$canvasArea = new ilRadioGroupInputGUI($plugin->txt("canvasArea"), "canvasArea");
 		$canvasArea->addOption(new ilRadioOption($plugin->txt("useImageSize"), 'radioImageSize', ''));
+		$canvasArea->setInfo($plugin->txt("canvas_size_hint"));
 		$ownSize = new ilRadioOption($plugin->txt("useOwnSize"), 'radioOwnSize', '');
 		$canvasArea->addOption($ownSize);
 		$canvasArea->setValue($this->object->getRadioOption());
@@ -231,8 +232,17 @@ class assPaintQuestionGUI extends assQuestionGUI
 
 		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
 		
-		if ($this->object->getImageFilename())
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() != "radioOwnSize") {
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
+		}
+		
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+			if ($this->object->getResizedImageStatus() == 0){
+				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+				
+			}
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb()."resized_".$this->object->getImageFilename());
+		}
 
 
 		if ($this->object->getRadioOption() == "radioOwnSize")
@@ -320,9 +330,18 @@ class assPaintQuestionGUI extends assQuestionGUI
 		
 		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
 		
-		if ($this->object->getImageFilename())
-				$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
-
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() != "radioOwnSize") {
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
+		}
+		
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+			if ($this->object->getResizedImageStatus() == 0){
+				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+				
+			}
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb()."resized_".$this->object->getImageFilename());
+		}
+		
 				if ($this->object->getRadioOption() == "radioOwnSize")
 				{
 					$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
