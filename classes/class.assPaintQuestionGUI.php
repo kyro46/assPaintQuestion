@@ -74,6 +74,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		
 		// background-image		
 		$image = new ilImageFileInputGUI($plugin->txt("image"), 'imagefile');
+		$image->setSuffixes(array("jpg", "jpeg", "png"));
+		
 		if ($this->object->getImageFilename() != "")
 		{
 			$image->setImage($this->object->getImagePathWeb().$this->object->getImageFilename());
@@ -232,18 +234,14 @@ class assPaintQuestionGUI extends assQuestionGUI
 		if ($this->object->getImageFilename())
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
 
+
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
-			$template->setVariable("WIDTH", $this->object->getCanvasWidth()+61);
-			$template->setVariable("HEIGHT", $this->object->getCanvasHeight()+31);
-			
-			$height = $this->object->getCanvasHeight();
-			if ($height < 400) {
-				$template->setVariable("HEIGHT_DIV", 400);
-			} else {
-				$template->setVariable("HEIGHT_DIV", $height);
-			}
-		} else // radioImageSize
+			$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
+			$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
+			$template->setVariable("HEIGHT_DIV", $this->object->getCanvasHeight() + 31);
+
+		} else // use Image Size or default of 800x700
 		{
 			if( $this->object->getImageFilename() )
 			{
@@ -329,14 +327,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 				{
 					$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
 					$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
-					
-					$height = $this->object->getCanvasHeight();
-					if ($height < 400) {
-						$template->setVariable("HEIGHT_DIV", 400);
-					} else {
-						$template->setVariable("HEIGHT_DIV", $height);
-					}
-				} else // radioImageSize
+					$template->setVariable("HEIGHT_DIV", $this->object->getCanvasHeight() + 31);
+				} else // use Image Size or default of 800x700
 				{
 					if( $this->object->getImageFilename() )
 					{

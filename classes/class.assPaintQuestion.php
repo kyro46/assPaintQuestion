@@ -93,7 +93,10 @@ class assPaintQuestion extends assQuestion
 	function deleteImage()
 	{
 		$file = $this->getImagePath() . $this->getImageFilename();
+		//$file_resized = $this->getImagePath() ."resized_".$this->getImageFilename();
+		
 		@unlink($file); // delete image from folder
+		//@unlink($file_resized);
 		$this->image_filename = "";
 	}
 	
@@ -183,6 +186,53 @@ class assPaintQuestion extends assQuestion
 			move_uploaded_file($image_tempfilename, $imagepath.'/'.$image_filename);			
 		}
 	}
+	
+	function resizeImage($width, $height){
+		
+		error_log($this->getImagePath());
+		error_log($this->getImageFilename());
+		
+			$path = $this->getImagePath().$this->getImageFilename();
+			$destination = $this->getImagePath().'resized_'.$this->getImageFilename();
+			
+			list ( $width, $height, $type ) = getimagesize ( $path);
+			
+			switch ( $type )
+			{
+				case 1:
+					$image = imagecreatefromgif ($path);
+					break;
+				case 2:
+					$image= imagecreatefromjpeg ($path);
+					break;
+				case 3:
+					$image= imagecreatefrompng ($path);
+			}
+			
+			// Neue Größe berechnen
+			$newwidth = $this->getCanvasWidth();
+			$newheight = $this->getCanvasHeight();
+			
+			// Bild laden
+			$resized= imagecreatetruecolor($newwidth, $newheight);
+			
+			// Skalieren
+			imagecopyresized($resized, $image, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
+			
+			//Speichern
+			switch ( $type )
+			{
+				case 1:
+					imagegif($resized, $destination);
+					break;
+				case 2:
+					imagejpeg($resized, $destination, 100);
+					break;
+				case 3:
+					imagepng ($resized, $destination, 9);
+			}
+	}
+	
 	
 	/**
 	 * Loads a question object from a database
