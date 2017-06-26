@@ -275,8 +275,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 				}
 			} else
 			{
-				$template->setVariable("WIDTH", 800);
-				$template->setVariable("HEIGHT", 700);
+				$template->setVariable("WIDTH", 861);
+				$template->setVariable("HEIGHT", 731);
 			}
 		}
 		
@@ -337,24 +337,38 @@ class assPaintQuestionGUI extends assQuestionGUI
 		if ($this->object->getImageFilename())
 				$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
 
-		if ($this->object->getRadioOption() == "radioOwnSize")
-		{
-			$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
-			$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
-		} else // radioImageSize
-		{
-			if( $this->object->getImageFilename() )
-			{
-				$image = $this->object->getImagePath().$this->object->getImageFilename();
-				$size = getimagesize($image);
-				$template->setVariable("WIDTH", $size[0] + 61);
-				$template->setVariable("HEIGHT", $size[1] + 31);
-			} else
-			{
-				$template->setVariable("WIDTH", 861);
-				$template->setVariable("HEIGHT", 731);
-			}
-		}
+				if ($this->object->getRadioOption() == "radioOwnSize")
+				{
+					$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
+					$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
+					
+					$height = $this->object->getCanvasHeight();
+					if ($height < 400) {
+						$template->setVariable("HEIGHT_DIV", 400);
+					} else {
+						$template->setVariable("HEIGHT_DIV", $height);
+					}
+				} else // radioImageSize
+				{
+					if( $this->object->getImageFilename() )
+					{
+						$image = $this->object->getImagePath().$this->object->getImageFilename();
+						$size = getimagesize($image);
+						$template->setVariable("WIDTH", $size[0] + 61);
+						$template->setVariable("HEIGHT", $size[1] + 31);
+						
+						$height = $size[1] + 31;
+						if ($height < 400) {
+							$template->setVariable("HEIGHT_DIV", 400);
+						} else {
+							$template->setVariable("HEIGHT_DIV", $height);
+						}
+					} else
+					{
+						$template->setVariable("WIDTH", 861);
+						$template->setVariable("HEIGHT", 731);
+					}
+				}
 		
 		$tpl->addCss("./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/literallycanvas.css");
 		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/react-0.14.3.js');

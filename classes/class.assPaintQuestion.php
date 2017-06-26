@@ -575,7 +575,7 @@ class assPaintQuestion extends assQuestion
 				"active_fi" => array("integer", $active_id),
 				"question_fi" => array("integer", $this->getId()),
 				"value1" => array("clob", $solution["value1"]), //JSON
-				"value2" => array("clob", $solution["value2"]), //Filename
+				"value2" => array("clob", $filename), //Filename
 				"pass" => array("integer", $pass),
 				"tstamp" => array("integer", time())
 			));
@@ -583,12 +583,15 @@ class assPaintQuestion extends assQuestion
 			if (!@file_exists($this->getFileUploadPath($test_id, $active_id))) 
 				ilUtil::makeDirParents($this->getFileUploadPath($test_id, $active_id));
 			
+			// Dont't delete old solutions as long as the test or the specific test pass exists
+			/*
 			// Grab all files from the desired folder
 			$files = glob( $this->getFileUploadPath($test_id, $active_id).'*.png' );
 			if (count($files) == 3)
 			{
 				unlink($files[0]);
-			}						
+			}
+			*/						
 			$imageInfo = $solution["value2"];
 			$image = fopen($imageInfo, 'r');
 			file_put_contents($filename, $image);
