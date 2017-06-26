@@ -440,6 +440,26 @@ class assPaintQuestion extends assQuestion
 			print "Image could not be copied.";
 		}
 	}
+	
+	/**
+	 * Get a submitted solution array from $_POST
+	 *
+	 * In general this may return any type that can be stored in a php session
+	 * The return value is used by:
+	 * 		savePreviewData()
+	 * 		saveWorkingData()
+	 * 		calculateReachedPointsForSolution()
+	 *
+	 * @return	array	('value1' => string, 'value2' => string, 'points' => float)
+	 */
+	protected function getSolutionSubmit()
+	{
+		return array(
+				'value1' => ilUtil::stripSlashes($_POST['answerJSON']),
+				'value2' => ilUtil::stripSlashes($_POST['answerImage'])
+		);
+	}
+
 	/**
 	 * Returns the points, a learner has reached answering the question
 	 * The points are calculated from the given answers including checks
@@ -480,7 +500,16 @@ class assPaintQuestion extends assQuestion
 		*/
 		return $points;
 	}
-	
+
+	/**
+	 * Calculate the reached points for a submitted user input
+	 *
+	 * @param mixed user input (scalar, object or array)
+	 */
+	public function calculateReachedPointsforSolution($solution)
+	{
+		return 0;
+	}
 	
     /**
 	* Returns the filesystem path for file uploads
@@ -522,9 +551,8 @@ class assPaintQuestion extends assQuestion
 			)
 		);
 
-		$entered_values = false;	
-		$value1 = $_POST['answerJSON'];
-		$value2 = $_POST['answerImage'];		
+		$entered_values = false;
+		$solution = $this->getSolutionSubmit();
 		
 		$result = $ilDB->queryF("SELECT test_fi FROM tst_active WHERE active_id = %s",
 			array('integer'),
@@ -537,7 +565,7 @@ class assPaintQuestion extends assQuestion
 			$test_id = $row["test_fi"];
 		}
 		
-		if (strlen($value2) > 0)
+		if (strlen($solution["value2"]) > 0)
 		{
 			$filename = $this->getFileUploadPath($test_id, $active_id).time()."_PaintTask.png";
 			$entered_values = true;
@@ -546,8 +574,8 @@ class assPaintQuestion extends assQuestion
 				"solution_id" => array("integer", $next_id),
 				"active_fi" => array("integer", $active_id),
 				"question_fi" => array("integer", $this->getId()),
-				"value1" => array("clob", $value1),
-				"value2" => array("clob", $filename),
+				"value1" => array("clob", $solution["value1"]), //JSON
+				"value2" => array("clob", $solution["value2"]), //Filename
 				"pass" => array("integer", $pass),
 				"tstamp" => array("integer", time())
 			));
@@ -561,7 +589,7 @@ class assPaintQuestion extends assQuestion
 			{
 				unlink($files[0]);
 			}						
-			$imageInfo = $value2;
+			$imageInfo = $solution["value2"];
 			$image = fopen($imageInfo, 'r');
 			file_put_contents($filename, $image);
 			fclose($image);
