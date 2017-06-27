@@ -16,7 +16,7 @@ class assPaintQuestion extends assQuestion
 	// backgroundimage	
 	var $image_filename = "";
 	// brushsize choosable? false - 0, true - 1
-	var $lineValue = 0;
+	var $lineValue = 1;
 	// colourselection enabled? false - 0, true - 1
 	var $colorValue = 0;	
 	// canvas size for backgroundimage or individual
