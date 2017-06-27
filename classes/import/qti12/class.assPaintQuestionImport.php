@@ -99,7 +99,7 @@ class assPaintQuestionImport extends assQuestionImport
 		$this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
 		$this->object->setObjId($questionpool_id);
 		$this->object->setEstimatedWorkingTime($duration["h"], $duration["m"], $duration["s"]);		
-		$this->object->setPoints($item->getMetadataEntry("points"));
+		$this->object->setPoints($item->getMetadataEntry("POINTS"));
 		$this->object->setLineValue($item->getMetadataEntry("allowDifferentLineSize"));
 		$this->object->setColorValue($item->getMetadataEntry("allowDifferentColors"));
 		
