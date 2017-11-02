@@ -11,6 +11,7 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  * @ingroup ModulesTestQuestionPool
  *
  * @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
+ * @ilCtrl_Calls assPaintQuestionGUI: ilFormPropertyDispatchGUI
  */
 class assPaintQuestionGUI extends assQuestionGUI
 {		
