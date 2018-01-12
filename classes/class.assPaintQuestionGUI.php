@@ -204,6 +204,11 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$this->object->setLineValue($_POST['lineValue']);		
 			$this->object->setColorValue($_POST['colorValue']);
 
+			//Compute resized picture as early as possible
+			if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+			}
+
 			$this->saveTaxonomyAssignments();
 			return 0;
 		}
@@ -238,6 +243,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		
 		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+			//TODO workaround this someday.
+			//For now needed for old or imported questions. 
 			if ($this->object->getResizedImageStatus() == 0){
 				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
 				
@@ -336,6 +343,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		
 		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+			//TODO workaround this someday.
+			//For now needed for old or imported questions. 
 			if ($this->object->getResizedImageStatus() == 0){
 				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
 				
