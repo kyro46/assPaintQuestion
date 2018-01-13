@@ -721,7 +721,8 @@ class assPaintQuestion extends assQuestion
 	*/
 	function getAdditionalTableName()
 	{
-		return "";
+		return array('il_qpl_qst_paint_check',
+				'il_qpl_qst_paint_image');
 	}
 	
 	/**
