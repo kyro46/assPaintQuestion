@@ -7,6 +7,7 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  * Class for TemplateQuestion Question
  *
  * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
+ * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
  * @version	$Id:  $
  * @ingroup ModulesTestQuestionPool
  */
@@ -117,18 +118,12 @@ class assPaintQuestion extends assQuestion
 	
 	function setLineValue($value)
 	{		
-		if ($value == 1)
-			$this->lineValue = 1;
-		else
-			$this->lineValue = 0;			
+		$this->lineValue = $value;			
 	}
 	
 	function setColorValue($value)
 	{
-		if ($value == 1)
-			$this->colorValue = 1;
-		else
-			$this->colorValue = 0;
+		$this->colorValue = $value;
 	}
 	
 	function setRadioOption($value)
@@ -163,7 +158,7 @@ class assPaintQuestion extends assQuestion
 	
 	function setResizedImageStatus($value)
 	{
-		$this->$resizedImageStatus= $value;
+		$this->$resizedImageStatus = $value;
 	}
 	
 	function getResizedImageStatus()
@@ -205,50 +200,51 @@ class assPaintQuestion extends assQuestion
 		
 		global $ilDB;
 		
-		error_log($this->getImagePath());
-		error_log($this->getImageFilename());
+		//error_log($this->getImagePath());
+		//error_log($this->getImageFilename());
 		
-			$path = $this->getImagePath().$this->getImageFilename();
-			$destination = $this->getImagePath().'resized_'.$this->getImageFilename();
-			
-			list ( $width, $height, $type ) = getimagesize ( $path);
-			
-			switch ( $type )
-			{
-				case 1:
-					$image = imagecreatefromgif ($path);
-					break;
-				case 2:
-					$image= imagecreatefromjpeg ($path);
-					break;
-				case 3:
-					$image= imagecreatefrompng ($path);
-			}
-			
-			// Neue Größe berechnen
-			$newwidth = $this->getCanvasWidth();
-			$newheight = $this->getCanvasHeight();
-			
-			// Bild laden
-			$resized= imagecreatetruecolor($newwidth, $newheight);
-			
-			// Skalieren
-			imagecopyresized($resized, $image, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
-			
-			//Speichern
-			switch ( $type )
-			{
-				case 1:
-					imagegif($resized, $destination);
-					break;
-				case 2:
-					imagejpeg($resized, $destination, 100);
-					break;
-				case 3:
-					imagepng ($resized, $destination, 9);
-			}
-			
-			$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 1 .' '.'WHERE question_fi = '.$this->getId());
+		$path = $this->getImagePath().$this->getImageFilename();
+		$destination = $this->getImagePath().'resized_'.$this->getImageFilename();
+		
+		list ( $width, $height, $type ) = getimagesize ( $path);
+		
+		switch ( $type )
+		{
+			case 1:
+				$image = imagecreatefromgif ($path);
+				break;
+			case 2:
+				$image= imagecreatefromjpeg ($path);
+				break;
+			case 3:
+				$image= imagecreatefrompng ($path);
+		}
+		
+		// Neue Größe berechnen
+		$newwidth = $this->getCanvasWidth();
+		$newheight = $this->getCanvasHeight();
+		
+		// Bild laden
+		$resized= imagecreatetruecolor($newwidth, $newheight);
+		
+		// Skalieren
+		imagecopyresized($resized, $image, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
+		
+		//Speichern
+		switch ( $type )
+		{
+			case 1:
+				imagegif($resized, $destination);
+				break;
+			case 2:
+				imagejpeg($resized, $destination, 100);
+				break;
+			case 3:
+				imagepng ($resized, $destination, 9);
+		}
+		
+		$this->resizedImageStatus = 1;
+		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 1 .' '.'WHERE question_fi = '.$this->getId());
 	}
 	
 	
@@ -294,16 +290,12 @@ class assPaintQuestion extends assQuestion
 		if($ilDB->numRows($resultCheck) == 1)
 		{
 			$data = $ilDB->fetchAssoc($resultCheck);
-			if ($data["line"]==1)
-				$this->lineValue = 1;
-			else $this->lineValue = 0;
+			$this->lineValue = $data["line"];
 			$this->colorValue = $data["color"];
 			$this->setRadioOption($data["radio_option"]);
 			$this->setCanvasWidth($data["width"]);
 			$this->setCanvasHeight($data["height"]);
-			if ($data["resized"]==1)
-				$this->setResizedImageStatus(1);
-				else $this->setResizedImageStatus(0);
+			$this->setResizedImageStatus($data["resized"]);
 		}
 				
 		try
@@ -348,15 +340,16 @@ class assPaintQuestion extends assQuestion
 			array("integer"),
 			array($this->getId())
 		);
-		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height) VALUES (%s, %s, %s, %s, %s, %s)", 
-				array("integer", "integer", "integer", "text", "integer", "integer"),
+		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height, resized) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
+				array("integer", "integer", "integer", "text", "integer", "integer", "integer"),
 				array(
 					$this->getId(),
-					$this->lineValue,
-					$this->colorValue,
-					$this->radioOption,
-					$this->canvasWidth,
-					$this->canvasHeight
+					$this->getLineValue(),
+					$this->getColorValue(),
+					$this->getRadioOption(),
+					$this->getCanvasWidth(),
+					$this->getCanvasHeight(),
+					$this->getResizedImageStatus()
 				)
 		);
 			

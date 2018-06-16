@@ -8,6 +8,7 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  * for Question-Type-Plugin.
  *
  * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
+ * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
  * @ingroup ModulesTestQuestionPool
  *
  * @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
@@ -15,9 +16,6 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  */
 class assPaintQuestionGUI extends assQuestionGUI
 {		
-	/**
-	 * @var assPaintQuestionPlugin	The plugin object
-	 */
 	var $plugin = null;
 
 	/**
@@ -414,7 +412,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	* @param boolean $show_feedback Show the question feedback
 	* @param boolean $show_correct_solution Show the correct solution instead of the user solution
 	* @param boolean $show_manual_scoring Show specific information for the manual scoring output
-	* @return The solution output of the question as HTML code
+	* @return string The solution output of the question as HTML code
 	*/
 	function getSolutionOutput(
 		$active_id,
