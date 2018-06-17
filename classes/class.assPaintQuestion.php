@@ -486,6 +486,13 @@ class assPaintQuestion extends assQuestion
 				print "Image could not be duplicated.";
 			}
 		}
+		
+		if ($this->getResizedImageStatus() == 1){
+			if (!copy($imagepath_original . 'resized_' .$filename, $imagepath . 'resized_' . $filename)) {
+				print "Resized image could not be duplicated.";
+			}
+		}
+		
 	}
 
 	function copyImage($question_id, $source_questionpool)
@@ -502,6 +509,12 @@ class assPaintQuestion extends assQuestion
 		if (!copy($imagepath_original . $filename, $imagepath . $filename)) 
 		{
 			print "Image could not be copied.";
+		}
+		
+		if ($this->getResizedImageStatus() == 1){
+			if (!copy($imagepath_original . 'resized_' .$filename, $imagepath . 'resized_' . $filename)) {
+				print "Resized image could not be duplicated.";
+			}
 		}
 	}
 	
