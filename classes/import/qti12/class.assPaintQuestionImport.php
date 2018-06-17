@@ -226,6 +226,7 @@ class assPaintQuestionImport extends assQuestionImport
 			if ($item->getMetadataEntry("backgroundimage") && empty($item->getMetadataEntry("resizedbackgroundimage"))) 
 			{
 				$this->object->resizeImage($item->getMetadataEntry("canvasheight"), $item->getMetadataEntry("canvaswidth"));
+				$this->object->setResizedImageStatus(1);
 			}
 		}
 		
