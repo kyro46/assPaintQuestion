@@ -205,7 +205,6 @@ class assPaintQuestionImport extends assQuestionImport
 				
 				$image =& base64_decode($resizedquestionimage["content"]);
 				$imagepath = $this->object->getImagePath();
-				
 				$imagepath .=  $resizedquestionimage["label"];
 				$fh = fopen($imagepath, "wb");
 				if ($fh == false)
@@ -221,7 +220,11 @@ class assPaintQuestionImport extends assQuestionImport
 				}
 				$this->object->setResizedImageStatus(1);
 				
-			} else {
+			} 
+			
+			//old question with own size but no resized image?
+			if ($item->getMetadataEntry("backgroundimage") && empty($item->getMetadataEntry("resizedbackgroundimage"))) 
+			{
 				$this->object->resizeImage($item->getMetadataEntry("canvasheight"), $item->getMetadataEntry("canvaswidth"));
 			}
 		}
