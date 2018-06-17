@@ -1,5 +1,5 @@
 # assPaintQuestion
-Paint-Questiontypeplugin for ILIAS 5.2.x
+Paint-Questiontypeplugin for ILIAS 5.2.x and 5.3.x
 
 For ILIAS 4.3, 4.4, 5.0 and 5.1 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases)
 
