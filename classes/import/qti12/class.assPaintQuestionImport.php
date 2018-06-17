@@ -195,32 +195,37 @@ class assPaintQuestionImport extends assQuestionImport
 			}
 		}
 		
-		if ($item->getMetadataEntry("resizedbackgroundimage") )
-		{
-			$resizedquestionimage = array(
-					"label" => $item->getMetadataEntry("resizedimagelabel"),
-					"content" => $item->getMetadataEntry("resizedbackgroundimage")
-			);
-			
-			$image =& base64_decode($resizedquestionimage["content"]);
-			$imagepath = $this->object->getImagePath();
-
-			$imagepath .=  $resizedquestionimage["label"];
-			$fh = fopen($imagepath, "wb");
-			if ($fh == false)
+		if ($item->getMetadataEntry("radiooption") == "radioOwnSize") {
+			if ($item->getMetadataEntry("resizedbackgroundimage") )
 			{
-				//global $ilErr;
-				//$ilErr->raiseError($this->object->lng->txt("error_save_image_file") . ": $php_errormsg", $ilErr->MESSAGE);
-				//return;
+				$resizedquestionimage = array(
+						"label" => $item->getMetadataEntry("resizedimagelabel"),
+						"content" => $item->getMetadataEntry("resizedbackgroundimage")
+				);
+				
+				$image =& base64_decode($resizedquestionimage["content"]);
+				$imagepath = $this->object->getImagePath();
+				
+				$imagepath .=  $resizedquestionimage["label"];
+				$fh = fopen($imagepath, "wb");
+				if ($fh == false)
+				{
+					//global $ilErr;
+					//$ilErr->raiseError($this->object->lng->txt("error_save_image_file") . ": $php_errormsg", $ilErr->MESSAGE);
+					//return;
+				}
+				else
+				{
+					$imagefile = fwrite($fh, $image);
+					fclose($fh);
+				}
+				$this->object->setResizedImageStatus(1);
+				
+			} else {
+				$this->object->resizeImage($item->getMetadataEntry("canvasheight"), $item->getMetadataEntry("canvaswidth"));
 			}
-			else
-			{
-				$imagefile = fwrite($fh, $image);
-				fclose($fh);
-			}
-			$this->object->setResizedImageStatus(1);
-			
 		}
+		
 		$this->object->setRadioOption($item->getMetadataEntry("radiooption"));
 		$this->object->setCanvasHeight($item->getMetadataEntry("canvasheight"));
 		$this->object->setCanvasWidth($item->getMetadataEntry("canvaswidth"));
