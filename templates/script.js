@@ -55,10 +55,12 @@ function PaintTask(resumeImage){
     }
 
     this.clear = function() {
-        // loesche den gesamten inhalt, hintergrundbild wird wieder vollstaendig angezeigt
-        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);        
-        pushDrawAction();
-        textarea.value = '';
+        if (confirm('Alles löschen?')) {
+            // loesche den gesamten inhalt, hintergrundbild wird wieder vollstaendig angezeigt
+            ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+            pushDrawAction();
+            textarea.value = '';
+        }
     }
 
     this.erasePaint = function(button){
