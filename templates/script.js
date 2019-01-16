@@ -161,44 +161,44 @@ function PaintTask(resumeImage){
         // unterdruecke Kontextmenu vom canvas
         return false;  
     }
-    canvas.addEventListener("mousemove", function (e) {
-        mouseMove(e);        
-    }, false);
-    canvas.addEventListener("mousedown", function (e) {
-        mouseDown(e);
-    }, false);
-    canvas.addEventListener("mouseup", function (e) {
-        mouseUp(e);
-    }, false);
-    canvas.addEventListener("mouseout", function (e) {
-        mouseOut(e);
-    }, false);
+
+    function init() {
+        canvas.addEventListener("mousemove", function (e) {
+            mouseMove(e);
+        }, false);
+        canvas.addEventListener("mousedown", function (e) {
+            mouseDown(e);
+        }, false);
+        canvas.addEventListener("mouseup", function (e) {
+            mouseUp(e);
+        }, false);
+        canvas.addEventListener("mouseout", function (e) {
+            mouseOut(e);
+        }, false);
+    }
 
     //**********
     //********** weitere initialisierung
-    //**********        
-    
-	function resume(){
-		if (resumeImage){
-			var img = new Image;
-			img.src = resumeImage;
-			//img.onload = function(){
-				// zeichne abgabe
-				ctx.drawImage(img,0,0); 
-			//};
-			//img.src = resumeImage;			
-			pushDrawAction(); 
-			save(); // aufruf notwendig, da sonst 'nichts' als abgabe gespeichert wird
-		}
-	}
-	
-	window.onload = function()
-	{
-		// ist beides noetig, da sonst nicht immer 
-		// die gemachten zeichnungen dargestellt werden...
-		resume();
-		setTimeout(resume,500);
-	}
-        
-   // pushDrawAction(); 
+    //**********
+
+    function resume() {
+        if (resumeImage){
+            var img = new Image;
+            $(img).load(function() {
+                ctx.drawImage(img,0,0);
+                pushDrawAction();
+                save(); // aufruf notwendig, da sonst 'nichts' als abgabe gespeichert wird
+                init();
+            });
+            img.src = resumeImage;
+        } else {
+            init();
+        }
+    }
+
+    $(document).ready(function() {
+        resume();
+    });
+
+    // pushDrawAction();
 }
