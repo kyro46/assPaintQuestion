@@ -23,3 +23,4 @@ useImageSize#:#Nutze die Größe des Hintergrundbildes (800 x 700 wenn kein Bild
 useOwnSize#:#Eigene Angaben
 width#:#Breite
 height#:#Höhe
+assPaintQuestion#:#Zeichenfrage

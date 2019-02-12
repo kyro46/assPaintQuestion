@@ -23,3 +23,4 @@ useImageSize#:#Use size of background image (800 x 700 if there is no image)
 useOwnSize#:#Use own size
 width#:#width
 height#:#height
+assPaintQuestion#:#Paint Question
