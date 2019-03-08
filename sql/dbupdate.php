@@ -56,19 +56,14 @@
 <#4>
 <?php
 	//Create missing scaled images on update
-	$client_id = basename(CLIENT_DATA_DIR);
 	$web_path = ilUtil::getWebspaceDir();
 	$assessment_path = $web_path."/assessment/";
 
 	//list of paint questions with resized images: question_id, obj_fi, image_file, width, height
-	$affected_paint_questions_query = $ilDB->query("select C.question_id, C.obj_fi, B.image_file, A.width, A.height from il_qpl_qst_paint_check A inner join il_qpl_qst_paint_image B inner join qpl_questions C on A.question_fi = B.question_fi AND A.question_fi = C.question_id WHERE A.radio_option = 'radioOwnSize'");
+	$affected_paint_questions_query = $ilDB->query("select C.question_id, C.obj_fi, B.image_file, A.width, A.height from il_qpl_qst_paint_check A inner join il_qpl_qst_paint_image B inner join qpl_questions C on A.question_fi = B.question_fi AND A.question_fi = C.question_id WHERE A.radio_option = 'radioOwnSize' AND A.resized = 0");
 	
 	while ($resize_paint_question = $ilDB->fetchAssoc($affected_paint_questions_query)) {
-		
-		error_log(print_r($resize_paint_question, true));
-
 		$path = $assessment_path . $resize_paint_question['obj_fi'] . "/" . $resize_paint_question['question_id'] . "/images/";
-		
 		$destination = $path .'resized_'. $resize_paint_question['image_file'];
 		
 		list ( $width, $height, $type ) = getimagesize ( $path . $resize_paint_question['image_file']);
@@ -109,6 +104,5 @@
 		}
 		
 		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 1 .' '.'WHERE question_fi = '. $ilDB->quote($resize_paint_question['question_id']));
-	
 	}
 ?>
