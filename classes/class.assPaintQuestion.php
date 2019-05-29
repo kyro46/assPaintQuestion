@@ -506,9 +506,11 @@ class assPaintQuestion extends assQuestion
 		}
 		$filename = $this->getImageFilename();
 		
-		if (!copy($imagepath_original . $filename, $imagepath . $filename)) 
-		{
-			print "Image could not be copied.";
+		if (!empty($filename)) {
+		    if (!copy($imagepath_original . $filename, $imagepath . $filename))
+		    {
+		        print "Image could not be copied.";
+		    }
 		}
 		
 		if ($this->getResizedImageStatus() == 1){
