@@ -1,5 +1,5 @@
 # assPaintQuestion
-Paint-Questiontypeplugin for ILIAS 5.2.x
+Paint-Questiontypeplugin for ILIAS 5.2.x and 5.3.x
 
 For ILIAS 4.3, 4.4, 5.0 and 5.1 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases)
 
@@ -25,8 +25,8 @@ and activate it in the ILIAS-Admin-GUI. Manual correction has to be enabled for 
 ### Known Problems ###
 
 * gd-jpeg, libjpeg: recoverable error - Please check "gd.jpeg_ignore_warning" in your php.ini, see [PHP Docs](https://secure.php.net/manual/en/image.configuration.php)
-* Due to a Bug in ILIAS 5.1+, the PDF-Archive for Tests is no longer usable. This affects this Questiontype as well.
 
 ### Credits ###
 * Development of plugin-draft for ILIAS 4.4 by Yves Annanias, University Halle, 2014
-* Further development by Christoph Jobst, University Halle, 2014/2015/2016
+* Further development by Christoph Jobst, University Halle/Leipzig, 2014/2015/2016/2017
+* The plugin (1.1.10+) utilises [literallycanvas](https://github.com/literallycanvas/literallycanvas) by Steve Johnson

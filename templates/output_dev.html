@@ -1,0 +1,67 @@
+<p>{QUESTIONTEXT}</p>
+<style type="text/css">
+  .fs-container_{PAINT_ID} {
+    width: {WIDTH}px;
+    margin: auto;
+  }
+
+  .literally {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+</style>
+
+<div class="fs-container_{PAINT_ID}">
+<div id="lc_{PAINT_ID}" style="height:{HEIGHT_DIV}px; width:{WIDTH}px; margin: auto;"></div>
+
+</div>
+<textarea id="answerJSON_{PAINT_ID}" name="answerJSON_{PAINT_ID}" cols="50" rows="10" style="display:none;">{RESUMEJSON}</textarea>
+<textarea id="answerImage_{PAINT_ID}" name="answerImage_{PAINT_ID}" cols="50" rows="10" style="display:none;">{RESUME}</textarea>
+<script type="text/javascript">
+
+	var loadJSON_{PAINT_ID} = '{RESUMEJSON}';
+	var backgroundImage_{PAINT_ID} = new Image();
+	backgroundImage_{PAINT_ID}.src =  "{BACKGROUND}";
+
+    var imageSize_{PAINT_ID} = {width: ({WIDTH}-61), height: ({HEIGHT}-31)};
+    
+  	var lc_{PAINT_ID} = LC.init(document.getElementById("lc_{PAINT_ID}"), {
+	    imageURLPrefix: './Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/lc-images',
+	    toolbarPosition: 'bottom',
+	    imageSize: imageSize_{PAINT_ID},
+	    defaultStrokeWidth: 2,
+	    watermarkImage: backgroundImage_{PAINT_ID},
+	    tools: [
+	    	  LC.tools.Pencil,
+	    	  LC.tools.Eraser,
+	    	  LC.tools.Line,
+	    	  LC.tools.Rectangle,
+	    	  LC.tools.Ellipse,
+	    	  LC.tools.Polygon,
+	    	  LC.tools.SelectShape,
+	    	  LC.tools.Text,
+	    	  //,LC.tools.Eyedropper //not usable for backgroundImage when inserted as watermark. If export without background becomes possible -> enable this
+	    	],
+	     strokeWidths : [{DISPLAY_LINE}]
+	  });
+  	
+  	if (loadJSON_{PAINT_ID} != '/n' && loadJSON_{PAINT_ID} != 'path' && loadJSON_{PAINT_ID} != '') {
+  	  	lc_{PAINT_ID}.loadSnapshotJSON(loadJSON_{PAINT_ID});
+  	}
+  	
+    var textareaJSON_{PAINT_ID} = document.getElementById("answerJSON_{PAINT_ID}");
+    var textarea_{PAINT_ID} = document.getElementById("answerImage_{PAINT_ID}");
+
+    var listen = lc_{PAINT_ID}.on('drawingChange', function() {
+    	var JSON_{PAINT_ID} = lc_{PAINT_ID}.getSnapshotJSON();
+    	JSON_{PAINT_ID} = JSON_{PAINT_ID}.replace(/'/g, '\\"');
+    	
+		var base_{PAINT_ID} = lc_{PAINT_ID}.getImage({rect: {x: 0, y: 0, width: ({WIDTH}-61), height: ({HEIGHT}-31)},scale: 1, includeWatermark: false}).toDataURL(); 	
+		
+		textareaJSON_{PAINT_ID}.value = JSON_{PAINT_ID};
+		textarea_{PAINT_ID}.value = base_{PAINT_ID}; // als base64-string
+    });
+
+</script>
+    

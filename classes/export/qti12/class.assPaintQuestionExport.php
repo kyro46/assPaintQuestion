@@ -5,7 +5,7 @@ include_once "./Modules/TestQuestionPool/classes/export/qti12/class.assQuestionE
 /**
 * Paint question export
 *
-* @author	Fred Neumann <fred.neumann@fau.de>
+* @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
 * @version	$Id:  $
 * @ingroup ModulesTestQuestionPool
 */
@@ -102,6 +102,31 @@ class assPaintQuestionExport extends assQuestionExport
 			$a_xml_writer->xmlElement("fieldentry", NULL, $base64);
 			$a_xml_writer->xmlEndTag("qtimetadatafield");
 		}
+
+		if 	($this->object->getResizedImageStatus() == 1)
+		{
+			$a_xml_writer->xmlStartTag("qtimetadatafield");
+			$a_xml_writer->xmlElement("fieldlabel", NULL, "resizedimagelabel");
+			$a_xml_writer->xmlElement("fieldentry", NULL, 'resized_' . $this->object->getImageFilename());
+			$a_xml_writer->xmlEndTag("qtimetadatafield");
+			
+			$resizedimagepath = $this->object->getImagePath().'resized_'.$this->object->getImageFilename();
+			$fh = fopen($resizedimagepath, "rb");
+			if ($fh == false)
+			{
+				global $ilErr;
+				$ilErr->raiseError($this->object->lng->txt("error_open_image_file"), $ilErr->MESSAGE);
+				return;
+			}
+			$imagefile = fread($fh, filesize($resizedimagepath));
+			fclose($fh);
+			$base64 = base64_encode($imagefile);
+			$a_xml_writer->xmlStartTag("qtimetadatafield");
+			$a_xml_writer->xmlElement("fieldlabel", NULL, "resizedbackgroundimage");
+			$a_xml_writer->xmlElement("fieldentry", NULL, $base64);
+			$a_xml_writer->xmlEndTag("qtimetadatafield");
+		}
+
 		$a_xml_writer->xmlStartTag("qtimetadatafield");
 		$a_xml_writer->xmlElement("fieldlabel", NULL, "radiooption");
 		$a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getRadioOption());

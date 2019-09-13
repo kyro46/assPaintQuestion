@@ -6,6 +6,7 @@ include_once "./Modules/TestQuestionPool/classes/import/qti12/class.assQuestionI
 * Class for PaintQuestion import
 *
 * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
+* @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
 * @version	$Id: $
 * @ingroup 	ModulesTestQuestionPool
 */
@@ -99,9 +100,11 @@ class assPaintQuestionImport extends assQuestionImport
 		$this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
 		$this->object->setObjId($questionpool_id);
 		$this->object->setEstimatedWorkingTime($duration["h"], $duration["m"], $duration["s"]);		
-		$this->object->setPoints($item->getMetadataEntry("points"));
+		$this->object->setPoints($item->getMetadataEntry("POINTS"));
 		$this->object->setLineValue($item->getMetadataEntry("allowDifferentLineSize"));
 		$this->object->setColorValue($item->getMetadataEntry("allowDifferentColors"));
+		$this->object->setResizedImageStatus(0);
+		
 		
 		// additional content editing mode information
 		$this->object->setAdditionalContentEditingMode(
@@ -191,6 +194,42 @@ class assPaintQuestionImport extends assQuestionImport
 				fclose($fh);
 			}
 		}
+		
+		if ($item->getMetadataEntry("radiooption") == "radioOwnSize") {
+			if ($item->getMetadataEntry("resizedbackgroundimage") )
+			{
+				$resizedquestionimage = array(
+						"label" => $item->getMetadataEntry("resizedimagelabel"),
+						"content" => $item->getMetadataEntry("resizedbackgroundimage")
+				);
+				
+				$image =& base64_decode($resizedquestionimage["content"]);
+				$imagepath = $this->object->getImagePath();
+				$imagepath .=  $resizedquestionimage["label"];
+				$fh = fopen($imagepath, "wb");
+				if ($fh == false)
+				{
+					//global $ilErr;
+					//$ilErr->raiseError($this->object->lng->txt("error_save_image_file") . ": $php_errormsg", $ilErr->MESSAGE);
+					//return;
+				}
+				else
+				{
+					$imagefile = fwrite($fh, $image);
+					fclose($fh);
+				}
+				$this->object->setResizedImageStatus(1);
+				
+			} 
+			
+			//old question with own size but no resized image?
+			if ($item->getMetadataEntry("backgroundimage") && empty($item->getMetadataEntry("resizedbackgroundimage"))) 
+			{
+				$this->object->resizeImage($item->getMetadataEntry("canvasheight"), $item->getMetadataEntry("canvaswidth"));
+				$this->object->setResizedImageStatus(1);
+			}
+		}
+		
 		$this->object->setRadioOption($item->getMetadataEntry("radiooption"));
 		$this->object->setCanvasHeight($item->getMetadataEntry("canvasheight"));
 		$this->object->setCanvasWidth($item->getMetadataEntry("canvaswidth"));

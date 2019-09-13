@@ -8,15 +8,14 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  * for Question-Type-Plugin.
  *
  * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
+ * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
  * @ingroup ModulesTestQuestionPool
  *
  * @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
+ * @ilCtrl_Calls assPaintQuestionGUI: ilFormPropertyDispatchGUI
  */
 class assPaintQuestionGUI extends assQuestionGUI
 {		
-	/**
-	 * @var assPaintQuestionPlugin	The plugin object
-	 */
 	var $plugin = null;
 
 	/**
@@ -74,6 +73,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		
 		// background-image		
 		$image = new ilImageFileInputGUI($plugin->txt("image"), 'imagefile');
+		$image->setSuffixes(array("jpg", "jpeg", "png"));
+		
 		if ($this->object->getImageFilename() != "")
 		{
 			$image->setImage($this->object->getImagePathWeb().$this->object->getImageFilename());
@@ -83,6 +84,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		//cancassize
 		$canvasArea = new ilRadioGroupInputGUI($plugin->txt("canvasArea"), "canvasArea");
 		$canvasArea->addOption(new ilRadioOption($plugin->txt("useImageSize"), 'radioImageSize', ''));
+		$canvasArea->setInfo($plugin->txt("canvas_size_hint"));
 		$ownSize = new ilRadioOption($plugin->txt("useOwnSize"), 'radioOwnSize', '');
 		$canvasArea->addOption($ownSize);
 		$canvasArea->setValue($this->object->getRadioOption());
@@ -90,12 +92,12 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$sizeWidth = new ilNumberInputGUI($plugin->txt("width"),"sizeWidth");
 		$sizeWidth->setValue($this->object->getCanvasWidth());		
 		$sizeWidth->setSize(6);
-		$sizeWidth->setMinValue(100);
+		$sizeWidth->setMinValue(450);
 		
 		$sizeHeight = new ilNumberInputGUI($plugin->txt("height"),"sizeHeight");
 		$sizeHeight->setValue($this->object->getCanvasHeight());
 		$sizeHeight->setSize(6);
-		$sizeHeight->setMinValue(100);
+		$sizeHeight->setMinValue(400);
 		
 		$ownSize->addSubItem($sizeWidth);
 		$ownSize->addSubItem($sizeHeight);
@@ -108,11 +110,13 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$form->addItem($line);
 		
 		// colourselection
+		/*Remove this option with version 1.1.10
 		$color = new ilCheckboxInputGUI($plugin->txt("color"), 'colorValue');
 		if ($this->object->getColorValue())
 			$color->setChecked(true);
 		$form->addItem($color);	
-			
+		*/
+		
 		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
 		//End Question specific
 		
@@ -142,7 +146,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	function save()
 	{	
 		$plugin = $this->object->getPlugin();
-		$result = $this->writePostData();
+		$result = $this->writeQuestionSpecificPostData();
 
 		if($result == 1)
 		{			
@@ -172,7 +176,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	* Evaluates a posted edit form and writes the form data in the question object	
 	* @return integer A positive value, if one of the required fields wasn't set, else 0
 	*/
-	function writePostData($always = false)
+	function writeQuestionSpecificPostData($always = false)
 	{
 		$hasErrors = (!$always) ? $this->editQuestion(true) : false;
 		if (!$hasErrors)
@@ -188,8 +192,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 			{
 				if (strlen($_FILES['imagefile']['tmp_name']))
 				{	
-					//if (file_exists($_FILES['imagefile']['tmp_name']))													
-					$this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);					
+					$this->object->deleteImage(); //Something (probably new) was uploaded - delete the old image
+					$this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);	
 				}	
 			}	
 			$this->object->setRadioOption($_POST["canvasArea"]);
@@ -197,6 +201,11 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$this->object->setCanvasHeight($_POST["sizeHeight"]);
 			$this->object->setLineValue($_POST['lineValue']);		
 			$this->object->setColorValue($_POST['colorValue']);
+
+			//Compute resized picture as early as possible
+			if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+			}
 
 			$this->saveTaxonomyAssignments();
 			return 0;
@@ -217,47 +226,62 @@ class assPaintQuestionGUI extends assQuestionGUI
 	{		
 		global $tpl;			
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output.html");						
+		$template     = $plugin->getTemplate("output_dev.html");						
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($this->object->getQuestion(), TRUE));
-		if (!$this->object->getLineValue())
-			$template->setVariable("DISPLAY_LINE", "display:none;");			
-		if (!$this->object->getColorValue())
-			$template->setVariable("DISPLAY_COLOR", "display:none;");	
-		if ($this->object->getImageFilename())
-			$template->setVariable("BACKGROUND", "background:url(".$this->object->getImagePathWeb().$this->object->getImageFilename()."); background-size:100% 100%;");	
-		$template->setVariable("LINESELECT", $plugin->txt("lineSelect"));				
-		$template->setVariable("COLORSELECT", $plugin->txt("colorSelect"));				
-		$template->setVariable("BLACK", $plugin->txt("black"));				
-		$template->setVariable("BLUE", $plugin->txt("blue"));				
-		$template->setVariable("GRAY", $plugin->txt("gray"));
-		$template->setVariable("GREEN", $plugin->txt("green"));
-		$template->setVariable("RED", $plugin->txt("red"));
-		$template->setVariable("YELLOW", $plugin->txt("yellow"));
-		$template->setVariable("UNDO", $plugin->txt("undo"));
-		$template->setVariable("REDO", $plugin->txt("redo"));
-		$template->setVariable("PAINT", $plugin->txt("paint"));
-		$template->setVariable("ERASE", $plugin->txt("erase"));
-		$template->setVariable("CLEAR_ALL", $plugin->txt("clearAll"));
+		if (!$this->object->getLineValue()) {
+			$template->setVariable("DISPLAY_LINE", "8");
+		} else {
+			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
+		}
+
+		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
+		
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() != "radioOwnSize") {
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
+		}
+		
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+			//TODO workaround this someday.
+			//For now needed for old or imported questions. 
+			if ($this->object->getResizedImageStatus() == 0){
+				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+				
+			}
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb()."resized_".$this->object->getImageFilename());
+		}
+
+
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
-			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
-			$template->setVariable("HEIGHT", $this->object->getCanvasHeight());
-		} else // radioImageSize
+			$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
+			$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
+			$template->setVariable("HEIGHT_DIV", $this->object->getCanvasHeight() + 31);
+
+		} else // use Image Size or default of 800x700
 		{
 			if( $this->object->getImageFilename() )
 			{
 				$image = $this->object->getImagePath().$this->object->getImageFilename();
 				$size = getimagesize($image);
-				$template->setVariable("WIDTH", $size[0]);
-				$template->setVariable("HEIGHT", $size[1]);
+				$template->setVariable("WIDTH", $size[0] + 61);
+				$template->setVariable("HEIGHT", $size[1] + 31);
+				
+				$height = $size[1] + 31;
+				if ($height < 400) {
+					$template->setVariable("HEIGHT_DIV", 400);
+				} else {
+					$template->setVariable("HEIGHT_DIV", $height);
+				}
 			} else
 			{
-				$template->setVariable("WIDTH", 800);
-				$template->setVariable("HEIGHT", 700);
+				$template->setVariable("WIDTH", 861);
+				$template->setVariable("HEIGHT", 731);
 			}
 		}
 		
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/script.js');
+		$tpl->addCss("./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/literallycanvas.css");
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/react-0.14.3.js');
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/literallycanvas.js');		
 		
 		$template->setVariable("RESUME", "");
 		
@@ -301,49 +325,62 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output.html");		
+		$template     = $plugin->getTemplate("output_dev.html");		
 		$output 	  = $this->object->getQuestion();
 		
-		if (!$this->object->getLineValue())
-			$template->setVariable("DISPLAY_LINE", "display:none;");			
-		if (!$this->object->getColorValue())
-			$template->setVariable("DISPLAY_COLOR", "display:none;");	
-		if ($this->object->getImageFilename())
-			$template->setVariable("BACKGROUND", "background:url(".$this->object->getImagePathWeb().$this->object->getImageFilename()."); background-size:100% 100%;");				
-		$template->setVariable("LINESELECT", $plugin->txt("lineSelect"));				
-		$template->setVariable("COLORSELECT", $plugin->txt("colorSelect"));				
-		$template->setVariable("BLACK", $plugin->txt("black"));				
-		$template->setVariable("BLUE", $plugin->txt("blue"));				
-		$template->setVariable("GRAY", $plugin->txt("gray"));
-		$template->setVariable("GREEN", $plugin->txt("green"));
-		$template->setVariable("RED", $plugin->txt("red"));
-		$template->setVariable("YELLOW", $plugin->txt("yellow"));
-		$template->setVariable("UNDO", $plugin->txt("undo"));
-		$template->setVariable("REDO", $plugin->txt("redo"));
-		$template->setVariable("PAINT", $plugin->txt("paint"));
-		$template->setVariable("ERASE", $plugin->txt("erase"));
-		$template->setVariable("CLEAR_ALL", $plugin->txt("clearAll"));
-		if ($this->object->getRadioOption() == "radioOwnSize")
-		{
-			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
-			$template->setVariable("HEIGHT", $this->object->getCanvasHeight());
-		} else // radioImageSize
-		{
-			if( $this->object->getImageFilename() )
-			{
-				$image = $this->object->getImagePath().$this->object->getImageFilename();
-				$size = getimagesize($image);
-				$template->setVariable("WIDTH", $size[0]);
-				$template->setVariable("HEIGHT", $size[1]);
-			} else
-			{
-				$template->setVariable("WIDTH", 800);
-				$template->setVariable("HEIGHT", 700);
-			}
+		if (!$this->object->getLineValue()) {
+			$template->setVariable("DISPLAY_LINE", "8");
+		} else {
+			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
 		}
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/script.js');
-		//$tpl->addCss("./Services/COPage/css/content.css");	
-								
+		
+		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
+		
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() != "radioOwnSize") {
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
+		}
+		
+		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+			//TODO workaround this someday.
+			//For now needed for old or imported questions. 
+			if ($this->object->getResizedImageStatus() == 0){
+				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+				
+			}
+			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb()."resized_".$this->object->getImageFilename());
+		}
+		
+				if ($this->object->getRadioOption() == "radioOwnSize")
+				{
+					$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
+					$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
+					$template->setVariable("HEIGHT_DIV", $this->object->getCanvasHeight() + 31);
+				} else // use Image Size or default of 800x700
+				{
+					if( $this->object->getImageFilename() )
+					{
+						$image = $this->object->getImagePath().$this->object->getImageFilename();
+						$size = getimagesize($image);
+						$template->setVariable("WIDTH", $size[0] + 61);
+						$template->setVariable("HEIGHT", $size[1] + 31);
+						
+						$height = $size[1] + 31;
+						if ($height < 400) {
+							$template->setVariable("HEIGHT_DIV", 400);
+						} else {
+							$template->setVariable("HEIGHT_DIV", $height);
+						}
+					} else
+					{
+						$template->setVariable("WIDTH", 861);
+						$template->setVariable("HEIGHT", 731);
+					}
+				}
+		
+		$tpl->addCss("./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/literallycanvas.css");
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/react-0.14.3.js');
+		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/literallycanvas.js');
+		
 		// letzte gespeicherte Eingabe anzeigen
 		$base64 = "";
 		if ($user_solution[0]["value2"])
@@ -352,7 +389,10 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$content = file_get_contents ( $user_solution[0]["value2"]);
 			$base64 = 'data:image/png;base64,'.base64_encode( $content );
 		}							
-								
+		
+		if ($user_solution[0]["value2"] != 'path'){
+			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",$user_solution[0]["value1"]));
+		}
 		$template->setVariable("RESUME", ilUtil::prepareFormOutput($base64));	
 		
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
@@ -372,7 +412,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	* @param boolean $show_feedback Show the question feedback
 	* @param boolean $show_correct_solution Show the correct solution instead of the user solution
 	* @param boolean $show_manual_scoring Show specific information for the manual scoring output
-	* @return The solution output of the question as HTML code
+	* @return string The solution output of the question as HTML code
 	*/
 	function getSolutionOutput(
 		$active_id,

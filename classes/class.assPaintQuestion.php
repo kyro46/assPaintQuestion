@@ -7,6 +7,7 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  * Class for TemplateQuestion Question
  *
  * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
+ * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
  * @version	$Id:  $
  * @ingroup ModulesTestQuestionPool
  */
@@ -16,15 +17,17 @@ class assPaintQuestion extends assQuestion
 	// backgroundimage	
 	var $image_filename = "";
 	// brushsize choosable? false - 0, true - 1
-	var $lineValue = 0;
+	var $lineValue = 1;
 	// colourselection enabled? false - 0, true - 1
 	var $colorValue = 0;	
 	// canvas size for backgroundimage or individual
 	var $radioOption = 'radioImageSize';
 	// canvas width
-	var $canvasWidth = 100;
+	var $canvasWidth = 450;
 	// canvas height
-	var $canvasHeight = 100;
+	var $canvasHeight = 400;
+	// resizedImageStatus needed for backward compatibility 0 -> needs to be created; 1 -> exists
+	var $resizedImageStatus = 0;
 	
 	/**
 	* assPaintQuestion constructor
@@ -92,9 +95,15 @@ class assPaintQuestion extends assQuestion
 	
 	function deleteImage()
 	{
+		global $ilDB;
+		
 		$file = $this->getImagePath() . $this->getImageFilename();
+		$file_resized = $this->getImagePath() ."resized_".$this->getImageFilename();
+		
 		@unlink($file); // delete image from folder
+		@unlink($file_resized);
 		$this->image_filename = "";
+		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 0 .' '.'WHERE question_fi = '.$this->getId());
 	}
 	
 	function getLineValue()	
@@ -109,18 +118,12 @@ class assPaintQuestion extends assQuestion
 	
 	function setLineValue($value)
 	{		
-		if ($value == 1)
-			$this->lineValue = 1;
-		else
-			$this->lineValue = 0;			
+		$this->lineValue = $value;			
 	}
 	
 	function setColorValue($value)
 	{
-		if ($value == 1)
-			$this->colorValue = 1;
-		else
-			$this->colorValue = 0;
+		$this->colorValue = $value;
 	}
 	
 	function setRadioOption($value)
@@ -153,6 +156,15 @@ class assPaintQuestion extends assQuestion
 		return $this->canvasWidth;
 	}
 	
+	function setResizedImageStatus($value)
+	{
+		$this->$resizedImageStatus = $value;
+	}
+	
+	function getResizedImageStatus()
+	{
+		return $this->$resizedImageStatus;
+	}
 	/**
 	 * Set the image file name
 	 *
@@ -183,6 +195,58 @@ class assPaintQuestion extends assQuestion
 			move_uploaded_file($image_tempfilename, $imagepath.'/'.$image_filename);			
 		}
 	}
+	
+	function resizeImage($width, $height){
+		
+		global $ilDB;
+		
+		//error_log($this->getImagePath());
+		//error_log($this->getImageFilename());
+		
+		$path = $this->getImagePath().$this->getImageFilename();
+		$destination = $this->getImagePath().'resized_'.$this->getImageFilename();
+		
+		list ( $width, $height, $type ) = getimagesize ( $path);
+		
+		switch ( $type )
+		{
+			case 1:
+				$image = imagecreatefromgif ($path);
+				break;
+			case 2:
+				$image= imagecreatefromjpeg ($path);
+				break;
+			case 3:
+				$image= imagecreatefrompng ($path);
+		}
+		
+		// Neue Größe berechnen
+		$newwidth = $this->getCanvasWidth();
+		$newheight = $this->getCanvasHeight();
+		
+		// Bild laden
+		$resized= imagecreatetruecolor($newwidth, $newheight);
+		
+		// Skalieren
+		imagecopyresized($resized, $image, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
+		
+		//Speichern
+		switch ( $type )
+		{
+			case 1:
+				imagegif($resized, $destination);
+				break;
+			case 2:
+				imagejpeg($resized, $destination, 100);
+				break;
+			case 3:
+				imagepng ($resized, $destination, 9);
+		}
+		
+		$this->resizedImageStatus = 1;
+		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 1 .' '.'WHERE question_fi = '.$this->getId());
+	}
+	
 	
 	/**
 	 * Loads a question object from a database
@@ -222,17 +286,16 @@ class assPaintQuestion extends assQuestion
 			$this->image_filename = $data["image_file"];
 		}		
 		
-		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
+		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultCheck) == 1)
 		{
 			$data = $ilDB->fetchAssoc($resultCheck);
-			if ($data["line"]==1)
-				$this->lineValue = 1;
-			else $this->lineValue = 0;
+			$this->lineValue = $data["line"];
 			$this->colorValue = $data["color"];
 			$this->setRadioOption($data["radio_option"]);
 			$this->setCanvasWidth($data["width"]);
 			$this->setCanvasHeight($data["height"]);
+			$this->setResizedImageStatus($data["resized"]);
 		}
 				
 		try
@@ -277,15 +340,16 @@ class assPaintQuestion extends assQuestion
 			array("integer"),
 			array($this->getId())
 		);
-		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height) VALUES (%s, %s, %s, %s, %s, %s)", 
-				array("integer", "integer", "integer", "text", "integer", "integer"),
+		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height, resized) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
+				array("integer", "integer", "integer", "text", "integer", "integer", "integer"),
 				array(
 					$this->getId(),
-					$this->lineValue,
-					$this->colorValue,
-					$this->radioOption,
-					$this->canvasWidth,
-					$this->canvasHeight
+					$this->getLineValue(),
+					$this->getColorValue(),
+					$this->getRadioOption(),
+					$this->getCanvasWidth(),
+					$this->getCanvasHeight(),
+					$this->getResizedImageStatus()
 				)
 		);
 			
@@ -422,6 +486,13 @@ class assPaintQuestion extends assQuestion
 				print "Image could not be duplicated.";
 			}
 		}
+		
+		if ($this->getResizedImageStatus() == 1){
+			if (!copy($imagepath_original . 'resized_' .$filename, $imagepath . 'resized_' . $filename)) {
+				print "Resized image could not be duplicated.";
+			}
+		}
+		
 	}
 
 	function copyImage($question_id, $source_questionpool)
@@ -435,11 +506,82 @@ class assPaintQuestion extends assQuestion
 		}
 		$filename = $this->getImageFilename();
 		
-		if (!copy($imagepath_original . $filename, $imagepath . $filename)) 
-		{
-			print "Image could not be copied.";
+		if (!empty($filename)) {
+		    if (!copy($imagepath_original . $filename, $imagepath . $filename))
+		    {
+		        print "Image could not be copied.";
+		    }
+		}
+		
+		if ($this->getResizedImageStatus() == 1){
+			if (!copy($imagepath_original . 'resized_' .$filename, $imagepath . 'resized_' . $filename)) {
+				print "Resized image could not be duplicated.";
+			}
 		}
 	}
+	
+	/**
+	 * Copies a question
+	 * This is used when a question is copied from a test to a question pool
+	 *
+	 * @access public
+	 */
+	public function createNewOriginalFromThisDuplicate($targetParentId, $targetQuestionTitle = "")
+	{
+		if ($this->id <= 0)
+		{
+			// The question has not been saved. It cannot be duplicated
+			return;
+		}
+		
+		include_once ("./Modules/TestQuestionPool/classes/class.assQuestion.php");
+		
+		$sourceQuestionId = $this->id;
+		$sourceParentId = $this->getObjId();
+		
+		// duplicate the question in database
+		$clone = $this;
+		$clone->id = -1;
+		
+		$clone->setObjId($targetParentId);
+		
+		if ($targetQuestionTitle)
+		{
+			$clone->setTitle($targetQuestionTitle);
+		}
+		
+		$clone->saveToDb();
+		// copy question page content
+		$clone->copyPageOfQuestion($sourceQuestionId);
+		// copy XHTML media objects
+		$clone->copyXHTMLMediaObjectsOfQuestion($sourceQuestionId);
+		// duplicate the image
+		$clone->copyImage($sourceQuestionId, $sourceParentId);
+		
+		$clone->onCopy($sourceParentId, $sourceQuestionId, $clone->getObjId(), $clone->getId());
+		
+		return $clone->id;
+	}
+	
+	/**
+	 * Get a submitted solution array from $_POST
+	 *
+	 * In general this may return any type that can be stored in a php session
+	 * The return value is used by:
+	 * 		savePreviewData()
+	 * 		saveWorkingData()
+	 * 		calculateReachedPointsForSolution()
+	 *
+	 * @return	array	('value1' => string, 'value2' => string, 'points' => float)
+	 */
+	protected function getSolutionSubmit()
+	{
+		return array(
+				'value1' => ilUtil::stripSlashes($_POST['answerJSON'."_qst_" . $this->getId()]),
+				'value2' => ilUtil::stripSlashes($_POST['answerImage'."_qst_" . $this->getId()])
+		);
+	}
+
 	/**
 	 * Returns the points, a learner has reached answering the question
 	 * The points are calculated from the given answers including checks
@@ -480,7 +622,16 @@ class assPaintQuestion extends assQuestion
 		*/
 		return $points;
 	}
-	
+
+	/**
+	 * Calculate the reached points for a submitted user input
+	 *
+	 * @param mixed user input (scalar, object or array)
+	 */
+	public function calculateReachedPointsforSolution($solution)
+	{
+		return 0;
+	}
 	
     /**
 	* Returns the filesystem path for file uploads
@@ -522,8 +673,8 @@ class assPaintQuestion extends assQuestion
 			)
 		);
 
-		$entered_values = false;		
-		$value = $_POST['answerImage'];		
+		$entered_values = false;
+		$solution = $this->getSolutionSubmit();
 		
 		$result = $ilDB->queryF("SELECT test_fi FROM tst_active WHERE active_id = %s",
 			array('integer'),
@@ -536,7 +687,7 @@ class assPaintQuestion extends assQuestion
 			$test_id = $row["test_fi"];
 		}
 		
-		if (strlen($value) > 0)
+		if (strlen($solution["value2"]) > 0)
 		{
 			$microtime = round(microtime(true) * 1000);
 			$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask.png";
@@ -546,15 +697,16 @@ class assPaintQuestion extends assQuestion
 				"solution_id" => array("integer", $next_id),
 				"active_fi" => array("integer", $active_id),
 				"question_fi" => array("integer", $this->getId()),
-				"value1" => array("clob", 'path'),
-				"value2" => array("clob", $filename),
+				"value1" => array("clob", $solution["value1"]), //JSON
+				"value2" => array("clob", $filename), //Filename
 				"pass" => array("integer", $pass),
 				"tstamp" => array("integer", time())
 			));
-
+			
 			if (!@file_exists($this->getFileUploadPath($test_id, $active_id)))
 				ilUtil::makeDirParents($this->getFileUploadPath($test_id, $active_id));
 
+			// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
 			// Grab all files from the desired folder
 			$files = glob( $this->getFileUploadPath($test_id, $active_id).'*.png' );
 			if (count($files) >= 3)
@@ -564,9 +716,8 @@ class assPaintQuestion extends assQuestion
 				});
 				unlink($files[0]); // delete oldest file
 			}
-
 			$matches = array();
-			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $value, $matches) === 1) {
+			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $solution["value2"], $matches) === 1) {
 				file_put_contents($filename, base64_decode($matches['base64']));
 			} else {
 				throw new InvalidArgumentException("failed to decode and save image.");
@@ -625,7 +776,8 @@ class assPaintQuestion extends assQuestion
 	*/
 	function getAdditionalTableName()
 	{
-		return "";
+		return array('il_qpl_qst_paint_check',
+				'il_qpl_qst_paint_image');
 	}
 	
 	/**

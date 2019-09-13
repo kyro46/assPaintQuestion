@@ -24,3 +24,4 @@ useOwnSize#:#Use own size
 width#:#width
 height#:#height
 assPaintQuestion#:#Paint Question
+canvas_size_hint#:#It's recommended to use the size of an already correcly sized image.
