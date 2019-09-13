@@ -66,7 +66,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		// points
 		$points = new ilNumberInputGUI($plugin->txt("points"), "points");
 		$points->setSize(3);
-		$points->setMinValue(0);
+		$points->setMinValue(1);
 		$points->allowDecimals(1);
 		$points->setRequired(true);
 		$points->setValue($this->object->getPoints());
