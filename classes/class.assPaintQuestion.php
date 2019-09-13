@@ -538,7 +538,8 @@ class assPaintQuestion extends assQuestion
 		
 		if (strlen($value) > 0)
 		{
-			$filename = $this->getFileUploadPath($test_id, $active_id).time()."_PaintTask.png";
+			$microtime = round(microtime(true) * 1000);
+			$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask.png";
 			$entered_values = true;
 			$next_id = $ilDB->nextId("tst_solutions");
 			$affectedRows = $ilDB->insert("tst_solutions", array(
@@ -550,20 +551,26 @@ class assPaintQuestion extends assQuestion
 				"pass" => array("integer", $pass),
 				"tstamp" => array("integer", time())
 			));
-			
-			if (!@file_exists($this->getFileUploadPath($test_id, $active_id))) 
+
+			if (!@file_exists($this->getFileUploadPath($test_id, $active_id)))
 				ilUtil::makeDirParents($this->getFileUploadPath($test_id, $active_id));
-			
+
 			// Grab all files from the desired folder
 			$files = glob( $this->getFileUploadPath($test_id, $active_id).'*.png' );
-			if (count($files) == 3)
+			if (count($files) >= 3)
 			{
-				unlink($files[0]);
-			}						
-			$imageInfo = $value;
-			$image = fopen($imageInfo, 'r');
-			file_put_contents($filename, $image);
-			fclose($image);
+				usort($files, function($a, $b) {
+					return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
+				});
+				unlink($files[0]); // delete oldest file
+			}
+
+			$matches = array();
+			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $value, $matches) === 1) {
+				file_put_contents($filename, base64_decode($matches['base64']));
+			} else {
+				throw new InvalidArgumentException("failed to decode and save image.");
+			}
 		}
 		
 		if ($entered_values)
