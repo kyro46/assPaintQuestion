@@ -25,3 +25,6 @@ width#:#width
 height#:#height
 assPaintQuestion#:#Paint Question
 canvas_size_hint#:#It's recommended to use the size of an already correcly sized image.
+logCountOption#:#Input history
+logCountOption_hint#:#Amount of older drawings for this question during a test per participant. In case of failure during a test the ILIAS adminstrator can provide the last X versions of the participants input as file.
+logCountOption_off#:#Off

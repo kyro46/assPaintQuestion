@@ -24,4 +24,7 @@ useOwnSize#:#Eigene Angaben
 width#:#Breite
 height#:#Höhe
 assPaintQuestion#:#Zeichenfrage
-canvas_size_hint#:#Es wrid empfohlen, die Größe des hochgeladenen Hintergrundbildes zu verwenden.
+canvas_size_hint#:#Es wird empfohlen, die Größe des hochgeladenen Hintergrundbildes zu verwenden.
+logCountOption#:#Eingabehistorie
+logCountOption_hint#:#Anzahl der historisierten Zeichnungen pro Prüfling. Bei Ausfällen währen der Prüfung können von der ILIAS-Administration die letzten X Versionsstände nachträglich als Datei bereitgestellt werden.
+logCountOption_off#:#Aus

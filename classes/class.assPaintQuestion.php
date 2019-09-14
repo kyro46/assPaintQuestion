@@ -28,6 +28,8 @@ class assPaintQuestion extends assQuestion
 	var $canvasHeight = 400;
 	// resizedImageStatus needed for backward compatibility 0 -> needs to be created; 1 -> exists
 	var $resizedImageStatus = 0;
+	// amount of backupimages
+	var $logCount = 3;
 	
 	/**
 	* assPaintQuestion constructor
@@ -165,6 +167,16 @@ class assPaintQuestion extends assQuestion
 	{
 		return $this->$resizedImageStatus;
 	}
+	
+	function setLogCount($value)
+	{
+	    $this->logCount = $value;
+	}
+	
+	function getLogCount()
+	{
+	    return $this->logCount;
+	}
 	/**
 	 * Set the image file name
 	 *
@@ -286,7 +298,7 @@ class assPaintQuestion extends assQuestion
 			$this->image_filename = $data["image_file"];
 		}		
 		
-		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
+		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized, log_count FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultCheck) == 1)
 		{
 			$data = $ilDB->fetchAssoc($resultCheck);
@@ -296,6 +308,7 @@ class assPaintQuestion extends assQuestion
 			$this->setCanvasWidth($data["width"]);
 			$this->setCanvasHeight($data["height"]);
 			$this->setResizedImageStatus($data["resized"]);
+			$this->setLogCount($data["log_count"]);
 		}
 				
 		try
@@ -340,8 +353,8 @@ class assPaintQuestion extends assQuestion
 			array("integer"),
 			array($this->getId())
 		);
-		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height, resized) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
-				array("integer", "integer", "integer", "text", "integer", "integer", "integer"),
+		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height, resized, log_count) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", 
+				array("integer", "integer", "integer", "text", "integer", "integer", "integer", "integer"),
 				array(
 					$this->getId(),
 					$this->getLineValue(),
@@ -349,7 +362,8 @@ class assPaintQuestion extends assQuestion
 					$this->getRadioOption(),
 					$this->getCanvasWidth(),
 					$this->getCanvasHeight(),
-					$this->getResizedImageStatus()
+					$this->getResizedImageStatus(),
+				    $this->getLogCount()
 				)
 		);
 			
@@ -709,7 +723,7 @@ class assPaintQuestion extends assQuestion
 			// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
 			// Grab all files from the desired folder
 			$files = glob( $this->getFileUploadPath($test_id, $active_id).'*.png' );
-			if (count($files) >= 3)
+			if (count($files) >= $this->getLogCount())
 			{
 				usort($files, function($a, $b) {
 					return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
@@ -719,6 +733,7 @@ class assPaintQuestion extends assQuestion
 			$matches = array();
 			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $solution["value2"], $matches) === 1) {
 				file_put_contents($filename, base64_decode($matches['base64']));
+				//TODO Future option to save the complete presentation into the log instead the plain participants drawing 
 			} else {
 				throw new InvalidArgumentException("failed to decode and save image.");
 			}

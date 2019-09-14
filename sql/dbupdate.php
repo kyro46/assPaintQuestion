@@ -106,3 +106,17 @@
 		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 1 .' '.'WHERE question_fi = '. $ilDB->quote($resize_paint_question['question_id']));
 	}
 ?>
+<#5>
+<?php
+	//Add option to configure the amount of saved images during backup
+    if(!$ilDB->tableColumnExists('il_qpl_qst_paint_check', 'log_count'))
+    {
+        $ilDB->addTableColumn('il_qpl_qst_paint_check', 'log_count', array(
+                'type' => 'integer',
+        		'length' => '3',
+        		'default' => 3,
+                'notnull' => false,
+            )
+        );
+    }
+?>

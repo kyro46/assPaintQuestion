@@ -117,6 +117,12 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$form->addItem($color);	
 		*/
 		
+		$logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCount");
+		$logCountOption->setInfo($plugin->txt("logCountOption_hint"));
+		$logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
+		$logCountOption->setValue($this->object->getLogCount());
+		$form->addItem($logCountOption);
+
 		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
 		//End Question specific
 		
@@ -139,27 +145,49 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		return $errors;
 	}
-	
-	/**
-	 * Save data to DB
-	 */
-	function save()
-	{	
-		$plugin = $this->object->getPlugin();
-		$result = $this->writeQuestionSpecificPostData();
 
-		if($result == 1)
-		{			
-			// TODO genauer beschreiben
-			ilUtil::sendFailure($plugin->txt("errorInput"), true);
-			$this->editQuestion();
-		}
-		else
-		{
-			parent::save();
-		}
+	/**
+	 * Evaluates a posted edit form and writes the form data in the question object
+	 *
+	 * @param bool $always
+	 * @return integer A positive value, if one of the required fields wasn't set, else 0
+	 */
+	public function writePostData($always = false)
+	{
+	    $hasErrors = (!$always) ? $this->editQuestion(true) : false;
+	    if (!$hasErrors)
+	    {
+	        $this->writeQuestionGenericPostData();
+	        $this->object->setPoints( str_replace( ",", ".", $_POST["points"] ));
+	        
+	        if ($_POST['imagefile_delete'])
+	        {
+	            $this->object->deleteImage();
+	        } else
+	        {
+	            if (strlen($_FILES['imagefile']['tmp_name']))
+	            {
+	                $this->object->deleteImage(); //Something (probably new) was uploaded - delete the old image
+	                $this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);
+	            }
+	        }
+	        $this->object->setRadioOption($_POST["canvasArea"]);
+	        $this->object->setCanvasWidth($_POST["sizeWidth"]);
+	        $this->object->setCanvasHeight($_POST["sizeHeight"]);
+	        $this->object->setLineValue($_POST['lineValue']);
+	        $this->object->setColorValue($_POST['colorValue']);
+	        $this->object->setLogCount($_POST['logCount']);
+	        
+	        //Compute resized picture as early as possible
+	        if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
+	            $this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
+	        }
+	        $this->saveTaxonomyAssignments();
+	        return 0;
+	    }
+	    return 1;
 	}
-	
+
 	/**
 	* check input fields
 	*/
@@ -171,50 +199,6 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}	
 		return TRUE;
 	}
-
-	/**
-	* Evaluates a posted edit form and writes the form data in the question object	
-	* @return integer A positive value, if one of the required fields wasn't set, else 0
-	*/
-	function writeQuestionSpecificPostData($always = false)
-	{
-		$hasErrors = (!$always) ? $this->editQuestion(true) : false;
-		if (!$hasErrors)
-		{
-			$this->writeQuestionGenericPostData();
-			
-			$this->object->setPoints( str_replace( ",", ".", $_POST["points"] ));
-									
-			if ($_POST['imagefile_delete'])						
-			{
-				$this->object->deleteImage();
-			} else
-			{
-				if (strlen($_FILES['imagefile']['tmp_name']))
-				{	
-					$this->object->deleteImage(); //Something (probably new) was uploaded - delete the old image
-					$this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);	
-				}	
-			}	
-			$this->object->setRadioOption($_POST["canvasArea"]);
-			$this->object->setCanvasWidth($_POST["sizeWidth"]);
-			$this->object->setCanvasHeight($_POST["sizeHeight"]);
-			$this->object->setLineValue($_POST['lineValue']);		
-			$this->object->setColorValue($_POST['colorValue']);
-
-			//Compute resized picture as early as possible
-			if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
-				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
-			}
-
-			$this->saveTaxonomyAssignments();
-			return 0;
-		}
-		else
-		{
-			return 1;
-		}
-	}				
 	
 	/**
 	 * Get the output for question preview
