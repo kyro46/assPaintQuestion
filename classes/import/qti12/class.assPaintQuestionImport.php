@@ -105,6 +105,7 @@ class assPaintQuestionImport extends assQuestionImport
 		$this->object->setColorValue($item->getMetadataEntry("allowDifferentColors"));
 		$this->object->setResizedImageStatus(0);
 		$this->object->setLogCount($item->getMetadataEntry("logCount"));
+		$this->object->setLogBkgr($item->getMetadataEntry("logBkgr"));
 		
 		// additional content editing mode information
 		$this->object->setAdditionalContentEditingMode(

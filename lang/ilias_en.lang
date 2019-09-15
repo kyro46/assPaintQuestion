@@ -26,5 +26,7 @@ height#:#height
 assPaintQuestion#:#Paint Question
 canvas_size_hint#:#It's recommended to use the size of an already correcly sized image.
 logCountOption#:#Input history
-logCountOption_hint#:#Amount of older drawings for this question during a test per participant. In case of failure during a test the ILIAS adminstrator can provide the last X versions of the participants input as file.
+logCountOption_hint#:#Amount of drawings kept during a test per participant. In case of failure during a test the ILIAS adminstrator can provide the last X versions of the participants input (without background) as file.
 logCountOption_off#:#Off
+logBkgrOption#:#Log with uploaded background
+logBkgrOption_hint#:#Create an additional file with the background merged into the saved picture per log entry (large toll on server performance especially for large groups/backgroundimages).

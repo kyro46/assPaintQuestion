@@ -117,12 +117,20 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$form->addItem($color);	
 		*/
 		
-		$logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCount");
+		//LogCount
+		$logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCountValue");
 		$logCountOption->setInfo($plugin->txt("logCountOption_hint"));
 		$logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
 		$logCountOption->setValue($this->object->getLogCount());
 		$form->addItem($logCountOption);
 
+		//LogBkgr
+		$logBkgrOption = new ilCheckboxInputGUI($plugin->txt("logBkgrOption"), 'logBkgrValue');
+		$logBkgrOption->setInfo($plugin->txt("logBkgrOption_hint"));
+		if ($this->object->getLogBkgr())
+			$logBkgrOption->setChecked(true);
+		$form->addItem($logBkgrOption);
+			
 		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
 		//End Question specific
 		
@@ -176,8 +184,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 	        $this->object->setCanvasHeight($_POST["sizeHeight"]);
 	        $this->object->setLineValue($_POST['lineValue']);
 	        $this->object->setColorValue($_POST['colorValue']);
-	        $this->object->setLogCount($_POST['logCount']);
-	        
+	        $this->object->setLogCount($_POST['logCountValue']);
+	        $this->object->setLogBkgr($_POST['logBkgrValue']);
+
 	        //Compute resized picture as early as possible
 	        if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
 	            $this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());

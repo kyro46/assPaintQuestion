@@ -26,5 +26,7 @@ height#:#Höhe
 assPaintQuestion#:#Zeichenfrage
 canvas_size_hint#:#Es wird empfohlen, die Größe des hochgeladenen Hintergrundbildes zu verwenden.
 logCountOption#:#Eingabehistorie
-logCountOption_hint#:#Anzahl der historisierten Zeichnungen pro Prüfling. Bei Ausfällen währen der Prüfung können von der ILIAS-Administration die letzten X Versionsstände nachträglich als Datei bereitgestellt werden.
+logCountOption_hint#:#Anzahl der historisierten Zeichnungen pro Prüfling. Bei Ausfällen währen der Prüfung können von der ILIAS-Administration die letzten X Versionsstände (ohne Hinterundbild) nachträglich als Datei bereitgestellt werden.
 logCountOption_off#:#Aus
+logBkgrOption#:#Eingabehistorie inklusive Hintergrundbild
+logBkgrOption_hint#:#Integriert das Hintergrundbild der Zeichnung in die historisierten Bilddateien (performancelastig, insbesondere bei großen Probandengruppen und/oder großen Hintergrundbildern). 

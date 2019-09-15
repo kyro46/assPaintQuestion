@@ -30,7 +30,9 @@ class assPaintQuestion extends assQuestion
 	var $resizedImageStatus = 0;
 	// amount of backupimages
 	var $logCount = 3;
-	
+	// enable merging the backgroundimage in addition to the logged versions
+	var $logBkgr = 0;
+
 	/**
 	* assPaintQuestion constructor
 	*
@@ -177,6 +179,17 @@ class assPaintQuestion extends assQuestion
 	{
 	    return $this->logCount;
 	}
+	
+	function setLogBkgr($value)
+	{
+		$this->logBkgr = $value;
+	}
+	
+	function getLogBkgr()
+	{
+		return $this->logBkgr;
+	}	
+	
 	/**
 	 * Set the image file name
 	 *
@@ -298,7 +311,7 @@ class assPaintQuestion extends assQuestion
 			$this->image_filename = $data["image_file"];
 		}		
 		
-		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized, log_count FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
+		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized, log_count, log_bkgr FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultCheck) == 1)
 		{
 			$data = $ilDB->fetchAssoc($resultCheck);
@@ -309,6 +322,7 @@ class assPaintQuestion extends assQuestion
 			$this->setCanvasHeight($data["height"]);
 			$this->setResizedImageStatus($data["resized"]);
 			$this->setLogCount($data["log_count"]);
+			$this->setLogBkgr($data["log_bkgr"]);
 		}
 				
 		try
@@ -353,8 +367,8 @@ class assPaintQuestion extends assQuestion
 			array("integer"),
 			array($this->getId())
 		);
-		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height, resized, log_count) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", 
-				array("integer", "integer", "integer", "text", "integer", "integer", "integer", "integer"),
+		$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_check (question_fi, line, color, radio_option, width, height, resized, log_count, log_bkgr) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+				array("integer", "integer", "integer", "text", "integer", "integer", "integer", "integer", "integer"),
 				array(
 					$this->getId(),
 					$this->getLineValue(),
@@ -363,7 +377,8 @@ class assPaintQuestion extends assQuestion
 					$this->getCanvasWidth(),
 					$this->getCanvasHeight(),
 					$this->getResizedImageStatus(),
-				    $this->getLogCount()
+				    $this->getLogCount(),
+					$this->getLogBkgr()
 				)
 		);
 			
@@ -733,7 +748,89 @@ class assPaintQuestion extends assQuestion
 			$matches = array();
 			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $solution["value2"], $matches) === 1) {
 				file_put_contents($filename, base64_decode($matches['base64']));
-				//TODO Future option to save the complete presentation into the log instead the plain participants drawing 
+				// Option to save the complete presentation into the log instead the plain participants drawing 
+				if ($this->getLogBkgr() && $this->getImageFilename()) {
+					
+					 //get background and save in var
+					 if ($this->getImageFilename())
+					 {
+					 $pathToImage = $this->getImagePath() . $this->getImageFilename();
+					 
+					 list ( $width, $height, $type ) = getimagesize ( $pathToImage );
+					 
+					 switch ( $type )
+					 {
+					 case 1:
+					 $background = imagecreatefromgif ($pathToImage);
+					 break;
+					 case 2:
+					 $background = imagecreatefromjpeg ($pathToImage);
+					 break;
+					 case 3:
+					 $background = imagecreatefrompng ($pathToImage);
+					 }
+					 //predefine picture in case no drawing exists -> show only background image
+					 ob_start();
+					 imagepng($background);
+					 $image = ob_get_clean();
+					 $base64 = base64_encode( $image );
+					 } else
+					 {
+					 //transparent pixel, no background
+					 //will be overwritten if drawing exists
+					 $base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
+					 }
+					 if ($this->getRadioOption() == "radioOwnSize")
+					 {
+					 
+					 } else // radioImageSize
+					 {
+					 if( $this->getImageFilename() )
+					 {
+					 $image = $this->getImagePath() . $this->getImageFilename();
+					 $size = getimagesize($image);
+					 }
+					 }
+					 
+					 $content = file_get_contents ( $filename);
+					 
+					 //merge background and drawing if backgroundimage available
+					 if( $this->getImageFilename() )
+					 {
+					 $drawing = imagecreatefromstring($content);
+					 
+					 $x1 = imagesx($background);
+					 $y1 = imagesy($background);
+					 $x2 = imagesx($drawing);
+					 $y2 = imagesy($drawing);
+					 
+					 imagecopyresampled(
+					 $background, $drawing,
+					 0, 0, 0, 0,
+					 $x1, $y1,
+					 $x2, $y2);
+					 
+					 ob_start();
+					 //resizing the picture to custom values
+					 if ($this->getRadioOption() == "radioOwnSize")
+					 {
+					 $resized=imagecreatetruecolor($this->getCanvasWidth(),$this->getCanvasHeight());
+					 imagecopyresampled($resized,$background,0,0,0,0,$this->getCanvasWidth(),$this->getCanvasHeight(),$x1,$y1);
+					 imagepng($resized);
+					 } else //use original background
+					 {
+					 imagepng($background);
+					 }
+					 $image = ob_get_clean();
+					 $base64 = base64_encode( $image );
+					 imagedestroy($background);
+					 imagedestroy($drawing);
+					 } else //only use the drawing
+					 {
+					 $base64 = base64_encode( $content );
+					 }
+					 file_put_contents($this->getFileUploadPath($test_id, $active_id).$microtime.'_PaintTask_full_backup.png' , base64_decode($base64));
+				}
 			} else {
 				throw new InvalidArgumentException("failed to decode and save image.");
 			}

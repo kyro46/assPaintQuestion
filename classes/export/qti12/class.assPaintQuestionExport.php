@@ -73,6 +73,12 @@ class assPaintQuestionExport extends assQuestionExport
 		$a_xml_writer->xmlElement("fieldlabel", NULL, "logCount");
 		$a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getLogCount());
 		$a_xml_writer->xmlEndTag("qtimetadatafield");
+		
+		$a_xml_writer->xmlStartTag("qtimetadatafield");
+		$a_xml_writer->xmlElement("fieldlabel", NULL, "logBkgr");
+		$a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getLogBkgr());
+		$a_xml_writer->xmlEndTag("qtimetadatafield");
+		
 		// backgroundImage
 		if 	($this->object->getImageFilename() != "")
 		{

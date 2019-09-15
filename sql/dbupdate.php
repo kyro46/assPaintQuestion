@@ -120,3 +120,17 @@
         );
     }
 ?>
+<#6>
+<?php
+	//Add option to configure the amount of saved images during backup
+    if(!$ilDB->tableColumnExists('il_qpl_qst_paint_check', 'log_bkgr'))
+    {
+        $ilDB->addTableColumn('il_qpl_qst_paint_check', 'log_bkgr', array(
+                'type' => 'integer',
+        		'length' => '1',
+        		'default' => 0,
+                'notnull' => false,
+            )
+        );
+    }
+?>
