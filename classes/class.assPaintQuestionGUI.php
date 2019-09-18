@@ -743,7 +743,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * @return string HTML Code with the answer specific feedback
 	 * @access public
 	 */
-	public function getSpecificFeedbackOutput($active_id, $pass)
+	public function getSpecificFeedbackOutput($usersolution)
 	{
 		return "";
 	}

@@ -1,7 +1,7 @@
 # assPaintQuestion
-Paint-Questiontypeplugin for ILIAS 5.2 and 5.3
+Paint-Questiontypeplugin for ILIAS 5.4
 
-For ILIAS 4.3 to 5.1 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases)
+For ILIAS 4.3 to 5.3 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases)
 
 ### Questiontype that allows drawing on a backgroundimage or a plain canvas ###
 
@@ -15,7 +15,7 @@ This plugin will add a questiontype, that allows:
 
 ### Installation ###
 
-PhantomJS recommended for PDF generation in ILIAS 5.3+
+PhantomJS recommended for PDF generation since ILIAS 5.3+
 
 * Customizing/global/plugins/Modules/TestQuestionPool/Questions
 ```bash
