@@ -17,7 +17,7 @@ undo#:#Rückgängig
 redo#:#Wiederholen
 paint#:#Zeichnen
 erase#:#Radierer
-clearAll#:#Alles Löschen
+clearAll#:#Alles löschen
 canvasArea#:#Zeichenbereich
 useImageSize#:#Nutze die Größe des Hintergrundbildes (800 x 700 wenn kein Bild angegeben)
 useOwnSize#:#Eigene Angaben
@@ -26,7 +26,11 @@ height#:#Höhe
 assPaintQuestion#:#Zeichenfrage
 canvas_size_hint#:#Es wird empfohlen, die Größe des hochgeladenen Hintergrundbildes zu verwenden.
 logCountOption#:#Eingabehistorie
-logCountOption_hint#:#Anzahl der historisierten Zeichnungen pro Prüfling. Bei Ausfällen währen der Prüfung können von der ILIAS-Administration die letzten X Versionsstände (ohne Hinterundbild) nachträglich als Datei bereitgestellt werden.
+logCountOption_hint#:#Anzahl der historisierten Zeichnungen pro Prüfling. Bei Ausfällen während der Prüfung können von der ILIAS-Administration die letzten X Versionsstände (ohne Hintergrundbild) nachträglich als Datei bereitgestellt werden.
 logCountOption_off#:#Aus
-logBkgrOption#:#Eingabehistorie inklusive Hintergrundbild
-logBkgrOption_hint#:#Integriert das Hintergrundbild der Zeichnung in die historisierten Bilddateien (performancelastig, insbesondere bei großen Probandengruppen und/oder großen Hintergrundbildern). 
+logBkgrOption#:#Eingabehistorie mit Hintergrundbild
+logBkgrOption_hint#:#Integriert das Hintergrundbild der Zeichnung in die historisierten Bilddateien (performancelastig, insbesondere bei großen Probandengruppen und/oder großen Hintergrundbildern).
+enableForUsers#:#Log-Optionen für Nutzer freigeben
+enableForUsers_hint#:#Legt fest, ob die hier gezeigten Log-Funktionen bei der Frageerstellung von den Nutzern selbst gesetzt werden können.
+image_bestsolution#:#Musterlösung
+not_set#:#Keine Musterlösung angegeben.

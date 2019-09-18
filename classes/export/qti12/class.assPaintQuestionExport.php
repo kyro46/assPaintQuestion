@@ -137,6 +137,40 @@ class assPaintQuestionExport extends assQuestionExport
 			$a_xml_writer->xmlEndTag("qtimetadatafield");
 		}
 
+		// Sample solution
+		if 	($this->object->getImageFilenameBestsolution() != "")
+		{
+		    $imagetype = "image/jpeg";
+		    if (preg_match("/.*\.(png|gif)$/", $this->object->getImageFilenameBestsolution(), $matches))
+		    {
+		        $imagetype = "image/" . $matches[1];
+		    }
+		    $a_xml_writer->xmlStartTag("qtimetadatafield");
+		    $a_xml_writer->xmlElement("fieldlabel", NULL, "imagelabelbestsolution");
+		    $a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getImageFilenameBestsolution());
+		    $a_xml_writer->xmlEndTag("qtimetadatafield");
+		    $a_xml_writer->xmlStartTag("qtimetadatafield");
+		    $a_xml_writer->xmlElement("fieldlabel", NULL, "imagetypebestsolution");
+		    $a_xml_writer->xmlElement("fieldentry", NULL, $imagetype);
+		    $a_xml_writer->xmlEndTag("qtimetadatafield");
+		    
+		    $imagepath = $this->object->getImagePath() . $this->object->getImageFilenameBestsolution();
+		    $fh = fopen($imagepath, "rb");
+		    if ($fh == false)
+		    {
+		        global $ilErr;
+		        $ilErr->raiseError($this->object->lng->txt("error_open_image_file"), $ilErr->MESSAGE);
+		        return;
+		    }
+		    $imagefile = fread($fh, filesize($imagepath));
+		    fclose($fh);
+		    $base64 = base64_encode($imagefile);
+		    $a_xml_writer->xmlStartTag("qtimetadatafield");
+		    $a_xml_writer->xmlElement("fieldlabel", NULL, "imagebestsolution");
+		    $a_xml_writer->xmlElement("fieldentry", NULL, $base64);
+		    $a_xml_writer->xmlEndTag("qtimetadatafield");
+		}
+
 		$a_xml_writer->xmlStartTag("qtimetadatafield");
 		$a_xml_writer->xmlElement("fieldlabel", NULL, "radiooption");
 		$a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getRadioOption());

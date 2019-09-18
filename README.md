@@ -11,8 +11,11 @@ This plugin will add a questiontype, that allows:
 * changing the color
 * changing the pensize
 * undo/redo/delete painted lines
+* keep an configurable amount of historized images for logging purposes (files accessible by the server admin)
 
 ### Installation ###
+
+PhantomJS recommended for PDF generation in ILIAS 5.3+
 
 * Customizing/global/plugins/Modules/TestQuestionPool/Questions
 ```bash

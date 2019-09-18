@@ -230,6 +230,38 @@ class assPaintQuestionImport extends assQuestionImport
 				$this->object->setResizedImageStatus(1);
 			}
 		}
+
+		// Sample solution
+		if ($item->getMetadataEntry("imagebestsolution") )
+		{
+		    $questionimage = array(
+		        "imagetype" => $item->getMetadataEntry("imagetypebestsolution"),
+		        "label" => $item->getMetadataEntry("imagelabelbestsolution"),
+		        "content" => $item->getMetadataEntry("imagebestsolution")
+		    );
+		    
+		    $this->object->setImageFilenameBestsolution($questionimage["label"]);
+		    $image =& base64_decode($questionimage["content"]);
+		    $imagepath = $this->object->getImagePath();
+		    if (!file_exists($imagepath))
+		    {
+		        include_once "./Services/Utilities/classes/class.ilUtil.php";
+		        ilUtil::makeDirParents($imagepath);
+		    }
+		    $imagepath .= $this->object->getImageFilenameBestsolution();
+		    $fh = fopen($imagepath, "wb");
+		    if ($fh == false)
+		    {
+		        //global $ilErr;
+		        //$ilErr->raiseError($this->object->lng->txt("error_save_image_file") . ": $php_errormsg", $ilErr->MESSAGE);
+		        //return;
+		    }
+		    else
+		    {
+		        $imagefile = fwrite($fh, $image);
+		        fclose($fh);
+		    }
+		}
 		
 		$this->object->setRadioOption($item->getMetadataEntry("radiooption"));
 		$this->object->setCanvasHeight($item->getMetadataEntry("canvasheight"));
