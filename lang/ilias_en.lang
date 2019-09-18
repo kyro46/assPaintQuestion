@@ -30,3 +30,7 @@ logCountOption_hint#:#Amount of drawings kept during a test per participant. In 
 logCountOption_off#:#Off
 logBkgrOption#:#Log with uploaded background
 logBkgrOption_hint#:#Create an additional file with the background merged into the saved picture per log entry (large toll on server performance especially for large groups/backgroundimages).
+enableForUsers#:#Enable log options for users
+enableForUsers_hint#:#Allow users to set the shown options per question themself.
+image_bestsolution#:#Sample solution
+not_set#:#No sample solution set.

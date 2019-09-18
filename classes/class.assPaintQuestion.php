@@ -28,10 +28,17 @@ class assPaintQuestion extends assQuestion
 	var $canvasHeight = 400;
 	// resizedImageStatus needed for backward compatibility 0 -> needs to be created; 1 -> exists
 	var $resizedImageStatus = 0;
+	// sample solution
+	var $image_filename_bestsolution = "";
 	// amount of backupimages
 	var $logCount = 3;
 	// enable merging the backgroundimage in addition to the logged versions
 	var $logBkgr = 0;
+	
+	//CONFIG
+	var $logCountConf = 3;
+	var $logBkgrConf = 0;
+	var $enableForUsersConf = 0;
 
 	/**
 	* assPaintQuestion constructor
@@ -96,20 +103,34 @@ class assPaintQuestion extends assQuestion
 		// backgroundimage
 		return $this->image_filename;
 	}
-	
+
+	function getImageFilenameBestsolution()
+	{
+	    // sample solution
+	    return $this->image_filename_bestsolution;
+	}
+
 	function deleteImage()
 	{
 		global $ilDB;
 		
 		$file = $this->getImagePath() . $this->getImageFilename();
 		$file_resized = $this->getImagePath() ."resized_".$this->getImageFilename();
-		
 		@unlink($file); // delete image from folder
 		@unlink($file_resized);
 		$this->image_filename = "";
 		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 0 .' '.'WHERE question_fi = '.$this->getId());
 	}
-	
+
+	function deleteImageBestsolution()
+	{
+	    global $ilDB;
+	    
+	    $file = $this->getImagePath() . $this->getImageFilenameBestsolution();	    
+	    @unlink($file); // delete image from folder
+	    $this->image_filename_bestsolution = "";
+	}
+
 	function getLineValue()	
 	{
 		return $this->lineValue;
@@ -189,7 +210,21 @@ class assPaintQuestion extends assQuestion
 	{
 		return $this->logBkgr;
 	}	
+
+	function getEnableForUsersConf()
+	{
+	    return $this->enableForUsersConf;
+	}	
 	
+	function getLogCountConf()
+	{
+	    return $this->logCountConf;
+	}	
+	
+	function getLogBkgrConf()
+	{
+	    return $this->logBkgrConf;
+	}	
 	/**
 	 * Set the image file name
 	 *
@@ -220,7 +255,39 @@ class assPaintQuestion extends assQuestion
 			move_uploaded_file($image_tempfilename, $imagepath.'/'.$image_filename);			
 		}
 	}
-	
+
+	/**
+	 * Set the image file name
+	 *
+	 * @param string $image_file name.
+	 * @access public
+	 * @see $image_filename
+	 */
+	function setImageFilenameBestsolution($image_filename, $image_tempfilename = "")
+	{
+	    if (!empty($image_filename))
+	    {
+	        $microtime = round(microtime(true) * 1000);
+	        $image_filename = $microtime . '.' . pathinfo($image_filename, PATHINFO_EXTENSION);
+	        $this->image_filename_bestsolution = $image_filename;
+	    }
+	    if (!empty($image_tempfilename))
+	    {
+	        $imagepath = $this->getImagePath();
+	        if (!file_exists($imagepath))
+	        {
+	            ilUtil::makeDirParents($imagepath);
+	        }
+	        //** TODO  hier kommt noch eine Fehlermeldung, obwohl das Bild am Ende im richtigen Ornder liegt
+	        
+	        /*if (!ilUtil::moveUploadedFile($image_tempfilename, $image_filename, $imagepath.'/'.$image_filename))
+	         {
+	         $this->ilias->raiseError("The image could not be uploaded!", $this->ilias->error_obj->MESSAGE);
+	         }*/
+	        move_uploaded_file($image_tempfilename, $imagepath.'/'.$image_filename);
+	    }
+	}
+
 	function resizeImage($width, $height){
 		
 		global $ilDB;
@@ -304,13 +371,14 @@ class assPaintQuestion extends assQuestion
 		$this->setEstimatedWorkingTime(substr($data["working_time"], 0, 2), substr($data["working_time"], 3, 2), substr($data["working_time"], 6, 2));			
 
 		// load backgroundImage
-		$resultImage= $ilDB->queryF("SELECT image_file FROM il_qpl_qst_paint_image WHERE question_fi = %s", array('integer'), array($question_id));
+		$resultImage= $ilDB->queryF("SELECT image_file, image_file_sample FROM il_qpl_qst_paint_image WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultImage) == 1)
 		{
 			$data = $ilDB->fetchAssoc($resultImage);
 			$this->image_filename = $data["image_file"];
-		}		
-		
+			$this->image_filename_bestsolution = $data["image_file_sample"];
+		}
+
 		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized, log_count, log_bkgr FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultCheck) == 1)
 		{
@@ -324,7 +392,17 @@ class assPaintQuestion extends assQuestion
 			$this->setLogCount($data["log_count"]);
 			$this->setLogBkgr($data["log_bkgr"]);
 		}
-				
+		
+		// load config
+		$config = $ilDB->query("SELECT enable_for_users_conf, log_count_conf, log_bkgr_conf FROM il_qpl_qst_paint_conf WHERE id = 0");
+		if($ilDB->numRows($config) == 1)
+		{
+		    $data = $ilDB->fetchAssoc($config);
+		    $this->enableForUsersConf = $data["enable_for_users_conf"];
+		    $this->logCountConf = $data["log_count_conf"];
+		    $this->logBkgrConf = $data["log_bkgr_conf"];
+		}
+		
 		try
 		{
 			$this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
@@ -352,13 +430,14 @@ class assPaintQuestion extends assQuestion
 			array($this->getId())
 		);
 		// save image		
-		if (!empty($this->image_filename))
+		if (!empty($this->image_filename) || !empty($this->image_filename_bestsolution))
 		{
-			$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_image (question_fi, image_file) VALUES (%s, %s)", 
-				array("integer", "text"),
+			$affectedRows = $ilDB->manipulateF("INSERT INTO il_qpl_qst_paint_image (question_fi, image_file, image_file_sample) VALUES (%s, %s, %s)", 
+				array("integer", "text", "text"),
 				array(
 					$this->getId(),
-					$this->image_filename
+					$this->image_filename,
+				    $this->image_filename_bestsolution
 				)
 			);
 		}
@@ -522,6 +601,14 @@ class assPaintQuestion extends assQuestion
 			}
 		}
 		
+		$filenameSampleSolution = $this->getImageFilenameBestsolution();
+		
+		if (!empty($filenameSampleSolution)) {
+		    if (!copy($imagepath_original . $filenameSampleSolution, $imagepath . $filenameSampleSolution)) {
+		        print "Image could not be duplicated.";
+		    }
+		}
+		
 	}
 
 	function copyImage($question_id, $source_questionpool)
@@ -546,6 +633,15 @@ class assPaintQuestion extends assQuestion
 			if (!copy($imagepath_original . 'resized_' .$filename, $imagepath . 'resized_' . $filename)) {
 				print "Resized image could not be duplicated.";
 			}
+		}
+		
+		$filenameSampleSolution = $this->getImageFilenameBestsolution();
+		
+		if (!empty($filenameSampleSolution)) {
+		    if (!copy($imagepath_original . $filenameSampleSolution, $imagepath . $filenameSampleSolution))
+		    {
+		        print "Image could not be copied.";
+		    }
 		}
 	}
 	
@@ -738,7 +834,10 @@ class assPaintQuestion extends assQuestion
 			// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
 			// Grab all files from the desired folder
 			$files = glob( $this->getFileUploadPath($test_id, $active_id).'*.png' );
-			if (count($files) >= $this->getLogCount())
+			
+			$counter =  $this->getEnableForUsersConf() ? $this->getLogCountConf() : $this->getLogCount();
+			
+			if (count($files) >= $counter)
 			{
 				usort($files, function($a, $b) {
 					return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
@@ -749,7 +848,10 @@ class assPaintQuestion extends assQuestion
 			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $solution["value2"], $matches) === 1) {
 				file_put_contents($filename, base64_decode($matches['base64']));
 				// Option to save the complete presentation into the log instead the plain participants drawing 
-				if ($this->getLogBkgr() && $this->getImageFilename()) {
+				
+				$backgroundLog =  $this->getEnableForUsersConf() ? $this->getLogBkgrConf() : $this->getLogBkgr();
+				
+				if ($backgroundLog && $this->getImageFilename()) {
 					
 					 //get background and save in var
 					 if ($this->getImageFilename())

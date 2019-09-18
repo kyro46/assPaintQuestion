@@ -134,3 +134,33 @@
         );
     }
 ?>
+<#7>
+<?php
+    // 
+    //$ilDB->query("ALTER TABLE il_qpl_qst_paint_image ALTER image_file SET DEFAULT NULL;");
+
+	//Add option to configure the amount of saved images during backup
+    if(!$ilDB->tableColumnExists('il_qpl_qst_paint_image', 'image_file_sample'))
+    {
+        $ilDB->addTableColumn('il_qpl_qst_paint_image', 'image_file_sample', array(
+            'type' => 'text',
+            'length' => 200,
+            'fixed' => false,
+            'notnull' => false,
+            )
+        );
+    }
+?>
+<#8>
+<?php
+	//Create config table
+	$fields = array(
+	        'id'                       => array('type' => 'integer', 'length' => '1'),
+			'enable_for_users_conf'    => array('type' => 'integer', 'length' => '1'),
+			'log_count_conf' 	       => array('type' => 'integer', 'length' => '3'),
+			'log_bkgr_conf' 	       => array('type' => 'integer', 'length' => '1')
+	);
+	$ilDB->createTable("il_qpl_qst_paint_conf", $fields);
+	$ilDB->addPrimaryKey("il_qpl_qst_paint_conf", array("id"));
+	$ilDB->manipulate('INSERT INTO il_qpl_qst_paint_conf (id, enable_for_users_conf, log_count_conf, log_bkgr_conf) VALUES (0, 0, 3, 0)');
+?>

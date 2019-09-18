@@ -117,20 +117,32 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$form->addItem($color);	
 		*/
 		
-		//LogCount
-		$logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCountValue");
-		$logCountOption->setInfo($plugin->txt("logCountOption_hint"));
-		$logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
-		$logCountOption->setValue($this->object->getLogCount());
-		$form->addItem($logCountOption);
+		// sample solution
+		$imageBestsolution = new ilImageFileInputGUI($plugin->txt("image_bestsolution"), 'imagefile_bestsolution');
+		$imageBestsolution->setSuffixes(array("jpg", "jpeg", "png"));
 
-		//LogBkgr
-		$logBkgrOption = new ilCheckboxInputGUI($plugin->txt("logBkgrOption"), 'logBkgrValue');
-		$logBkgrOption->setInfo($plugin->txt("logBkgrOption_hint"));
-		if ($this->object->getLogBkgr())
-			$logBkgrOption->setChecked(true);
-		$form->addItem($logBkgrOption);
-			
+		if ($this->object->getImageFilenameBestsolution() != "")
+		{
+		    $imageBestsolution->setImage($this->object->getImagePathWeb().$this->object->getImageFilenameBestsolution());
+		}
+		$form->addItem($imageBestsolution);
+		
+		if ($this->object->getEnableForUsersConf()) {
+			//LogCount
+			$logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCountValue");
+			$logCountOption->setInfo($plugin->txt("logCountOption_hint"));
+			$logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
+			$logCountOption->setValue($this->object->getLogCount());
+			$form->addItem($logCountOption);
+	
+			//LogBkgr
+			$logBkgrOption = new ilCheckboxInputGUI($plugin->txt("logBkgrOption"), 'logBkgrValue');
+			$logBkgrOption->setInfo($plugin->txt("logBkgrOption_hint"));
+			if ($this->object->getLogBkgr())
+				$logBkgrOption->setChecked(true);
+			$form->addItem($logBkgrOption);
+		}
+		
 		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
 		//End Question specific
 		
@@ -168,6 +180,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	        $this->writeQuestionGenericPostData();
 	        $this->object->setPoints( str_replace( ",", ".", $_POST["points"] ));
 	        
+	        //Background
 	        if ($_POST['imagefile_delete'])
 	        {
 	            $this->object->deleteImage();
@@ -184,8 +197,24 @@ class assPaintQuestionGUI extends assQuestionGUI
 	        $this->object->setCanvasHeight($_POST["sizeHeight"]);
 	        $this->object->setLineValue($_POST['lineValue']);
 	        $this->object->setColorValue($_POST['colorValue']);
-	        $this->object->setLogCount($_POST['logCountValue']);
-	        $this->object->setLogBkgr($_POST['logBkgrValue']);
+	        
+	        //Sample solution
+	        if ($_POST['imagefile_bestsolution_delete'])
+	        {
+	            $this->object->deleteImageBestsolution();
+	        } else
+	        {
+	            if (strlen($_FILES['imagefile_bestsolution']['tmp_name']))
+	            {
+	                $this->object->deleteImageBestsolution(); //Something (probably new) was uploaded - delete the old image
+	                $this->object->setImageFilenameBestsolution($_FILES['imagefile_bestsolution']['name'], $_FILES['imagefile_bestsolution']['tmp_name']);
+	            }
+	        }
+	        
+	        if ($this->object->getEnableForUsersConf()) {
+	           $this->object->setLogCount($_POST['logCountValue']);
+	           $this->object->setLogBkgr($_POST['logBkgrValue']);
+	        }
 
 	        //Compute resized picture as early as possible
 	        if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
@@ -439,8 +468,13 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$output = $this->object->getQuestion();			
 		
 		if ($show_correct_solution)
-		{			
-			return "<p>___________________________________________________</p>";
+		{	
+		    if ($this->object->getImageFilenameBestsolution() != "") {
+		      return "<img src='" . $this->object->getImagePathWeb() . $this->object->getImageFilenameBestsolution() . "'> ";
+		    } else {
+		        return $plugin->txt("not_set");
+		    }
+
 			//$template->setVariable("ID", $this->object->getId().'CORRECT_SOLUTION');	
 			// TODO hier nur die Musterlösung anzeigen, da wir uns im test beim drücken von check befinden ;)
 		}			
