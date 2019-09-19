@@ -833,23 +833,33 @@ class assPaintQuestion extends assQuestion
 
 			// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
 			// Grab all files from the desired folder
-			$files = glob( $this->getFileUploadPath($test_id, $active_id).'*.png' );
+			$files_draw_layer = glob( $this->getFileUploadPath($test_id, $active_id).'*PaintTask.png' );
+			$files_full_backup = glob( $this->getFileUploadPath($test_id, $active_id).'*full_backup.png' );
 			
-			$counter =  $this->getEnableForUsersConf() ? $this->getLogCountConf() : $this->getLogCount();
-			
-			if (count($files) >= $counter)
+			$counter =  $this->getEnableForUsersConf() ? $this->getLogCount() : $this->getLogCountConf();
+
+			if (count($files_draw_layer) >= $counter)
 			{
-				usort($files, function($a, $b) {
+				usort($files_draw_layer, function($a, $b) {
 					return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
 				});
-				unlink($files[0]); // delete oldest file
+				unlink($files_draw_layer[0]); // delete oldest file
 			}
+			
+			if (count($files_full_backup) >= $counter)
+			{
+			    usort($files_full_backup, function($a, $b) {
+			        return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
+			    });
+			        unlink($files_full_backup[0]); // delete oldest file
+			}
+
 			$matches = array();
 			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $solution["value2"], $matches) === 1) {
 				file_put_contents($filename, base64_decode($matches['base64']));
 				// Option to save the complete presentation into the log instead the plain participants drawing 
 				
-				$backgroundLog =  $this->getEnableForUsersConf() ? $this->getLogBkgrConf() : $this->getLogBkgr();
+				$backgroundLog =  $this->getEnableForUsersConf() ? $this->getLogBkgr() : $this->getLogBkgrConf();
 				
 				if ($backgroundLog && $this->getImageFilename()) {
 					
