@@ -815,7 +815,7 @@ class assPaintQuestion extends assQuestion
 		if (strlen($solution["value2"]) > 0)
 		{
 			$microtime = round(microtime(true) * 1000);
-			$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask.png";
+			$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask_" . $pass . ".png";
 			$entered_values = true;
 			$next_id = $ilDB->nextId("tst_solutions");
 			$affectedRows = $ilDB->insert("tst_solutions", array(
@@ -833,8 +833,8 @@ class assPaintQuestion extends assQuestion
 
 			// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
 			// Grab all files from the desired folder
-			$files_draw_layer = glob( $this->getFileUploadPath($test_id, $active_id).'*PaintTask.png' );
-			$files_full_backup = glob( $this->getFileUploadPath($test_id, $active_id).'*full_backup.png' );
+			$files_draw_layer = glob( $this->getFileUploadPath($test_id, $active_id).'*PaintTask_' . $pass . '.png' );
+			$files_full_backup = glob( $this->getFileUploadPath($test_id, $active_id).'*full_backup_' . $pass . '.png' );
 			
 			$counter =  $this->getEnableForUsersConf() ? $this->getLogCount() : $this->getLogCountConf();
 			
@@ -859,7 +859,7 @@ class assPaintQuestion extends assQuestion
 				file_put_contents($filename, base64_decode($matches['base64']));
 				// Option to save the complete presentation into the log instead the plain participants drawing 
 				
-				$backgroundLog =  $this->getEnableForUsersConf() ? $this->getLogBkgrConf() : $this->getLogBkgr();
+				$backgroundLog =  $this->getEnableForUsersConf() ? $this->getLogBkgr() : $this->getLogBkgrConf();				
 				
 				if ($backgroundLog && $this->getImageFilename()) {
 					
@@ -941,7 +941,7 @@ class assPaintQuestion extends assQuestion
 					 {
 					 $base64 = base64_encode( $content );
 					 }
-					 file_put_contents($this->getFileUploadPath($test_id, $active_id).$microtime.'_PaintTask_full_backup.png' , base64_decode($base64));
+					 file_put_contents($this->getFileUploadPath($test_id, $active_id).$microtime.'_PaintTask_full_backup' . $pass . '.png' , base64_decode($base64));
 				}
 			} else {
 				throw new InvalidArgumentException("failed to decode and save image.");
