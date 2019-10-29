@@ -941,7 +941,7 @@ class assPaintQuestion extends assQuestion
 					 {
 					 $base64 = base64_encode( $content );
 					 }
-					 file_put_contents($this->getFileUploadPath($test_id, $active_id).$microtime.'_PaintTask_full_backup' . $pass . '.png' , base64_decode($base64));
+					 file_put_contents($this->getFileUploadPath($test_id, $active_id).$microtime.'_PaintTask_full_backup_' . $pass . '.png' , base64_decode($base64));
 				}
 			} else {
 				throw new InvalidArgumentException("failed to decode and save image.");
