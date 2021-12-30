@@ -370,6 +370,12 @@ class assPaintQuestion extends assQuestion
 		$this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data["question_text"], 1));
 		$this->setEstimatedWorkingTime(substr($data["working_time"], 0, 2), substr($data["working_time"], 3, 2), substr($data["working_time"], 6, 2));			
 
+		try {
+			$this->setLifecycle(ilAssQuestionLifecycle::getInstance($data['lifecycle']));
+		} catch (ilTestQuestionPoolInvalidArgumentException $e) {
+			$this->setLifecycle(ilAssQuestionLifecycle::getDraftInstance());
+		}
+
 		// load backgroundImage
 		$resultImage= $ilDB->queryF("SELECT image_file, image_file_sample FROM il_qpl_qst_paint_image WHERE question_fi = %s", array('integer'), array($question_id));
 		if($ilDB->numRows($resultImage) == 1)
