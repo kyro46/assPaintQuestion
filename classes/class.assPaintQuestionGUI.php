@@ -569,7 +569,6 @@ class assPaintQuestionGUI extends assQuestionGUI
 						}
 						$image = ob_get_clean();
 						$base64 = base64_encode( $image );
-						imagedestroy($background);  
 						imagedestroy($drawing);
 					} else //only use the drawing
 					{
@@ -577,7 +576,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 					} 
 				}
 				$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));		
-		}		
+		}
+		imagedestroy($background);
 
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
 		
