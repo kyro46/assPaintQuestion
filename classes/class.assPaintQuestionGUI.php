@@ -577,7 +577,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 				}
 				$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));		
 		}
-		imagedestroy($background);
+		if ($background) {
+			imagedestroy($background);
+		}
 
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
 		
