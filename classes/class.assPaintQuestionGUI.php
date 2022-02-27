@@ -497,7 +497,14 @@ class assPaintQuestionGUI extends assQuestionGUI
 					$background = imagecreatefromjpeg ($pathToImage);
 					break;
 				case 3:
-					$background = imagecreatefrompng ($pathToImage);
+					$backgroundInput = imagecreatefrompng ($pathToImage);
+					// Steps to convert transparency to white (instead of default black)
+					$backgroundWidth = imagesx($backgroundInput);
+					$backgroundHeight = imagesy($backgroundInput);
+					$background = imagecreatetruecolor($backgroundWidth, $backgroundHeight);
+					$white = imagecolorallocate($background,  255, 255, 255);
+					imagefilledrectangle($background, 0, 0, $backgroundWidth, $backgroundHeight, $white);
+					imagecopy($background, $backgroundInput, 0, 0, 0, 0, $backgroundWidth, $backgroundHeight);
 			} 
 			//predefine picture in case no drawing exists -> show only background image
 			ob_start();
