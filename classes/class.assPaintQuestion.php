@@ -774,13 +774,14 @@ class assPaintQuestion extends assQuestion
 	}
 	
 	/**
-	* Saves the learners input of the question to the database
-	*
-	* @param integer $test_id The database id of the test containing this question
-    * @return boolean Indicates the save status (true if saved successful, false otherwise)
-	* @access public
-	* @see $answers
-	*/
+	 * Saves the learners input of the question to the database
+	 *
+	 * @param integer $active_id 	Active id of the user
+	 * @param integer $pass 		Test pass
+	 * @param boolean $authorized	The solution is authorized
+	 *
+	 * @return boolean $status
+	 */
 	function saveWorkingData($active_id, $pass = NULL, $authorized = true)
 	{
 		global $ilDB;
@@ -790,23 +791,11 @@ class assPaintQuestion extends assQuestion
 			include_once "./Modules/Test/classes/class.ilObjTest.php";
 			$pass = ilObjTest::_getPass($active_id);
 		}
-
-		$affectedRows = $ilDB->manipulateF("DELETE FROM tst_solutions WHERE active_fi = %s AND question_fi = %s AND pass = %s",
-			array(
-				"integer", 
-				"integer",
-				"integer"
-			),
-			array(
-				$active_id,
-				$this->getId(),
-				$pass
-			)
-		);
-
+		
 		$entered_values = false;
 		$solution = $this->getSolutionSubmit();
-		
+
+		// Get part of the path the image will be saved at
 		$result = $ilDB->queryF("SELECT test_fi FROM tst_active WHERE active_id = %s",
 			array('integer'),
 			array($active_id)
@@ -817,162 +806,165 @@ class assPaintQuestion extends assQuestion
 			$row = $ilDB->fetchAssoc($result);
 			$test_id = $row["test_fi"];
 		}
-		
-		if (strlen($solution["value2"]) > 0)
-		{
-			$microtime = round(microtime(true) * 1000);
-			$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask_" . $pass . ".png";
-			$entered_values = true;
-			$next_id = $ilDB->nextId("tst_solutions");
-			$affectedRows = $ilDB->insert("tst_solutions", array(
-				"solution_id" => array("integer", $next_id),
-				"active_fi" => array("integer", $active_id),
-				"question_fi" => array("integer", $this->getId()),
-				"value1" => array("clob", $solution["value1"]), //JSON
-				"value2" => array("clob", $filename), //Filename
-				"pass" => array("integer", $pass),
-				"tstamp" => array("integer", time())
-			));
-			
-			if (!@file_exists($this->getFileUploadPath($test_id, $active_id)))
-				ilUtil::makeDirParents($this->getFileUploadPath($test_id, $active_id));
 
-			// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
-			// Grab all files from the desired folder
-			$files_draw_layer = glob( $this->getFileUploadPath($test_id, $active_id).'*PaintTask_' . $pass . '.png' );
-			$files_full_backup = glob( $this->getFileUploadPath($test_id, $active_id).'*full_backup_' . $pass . '.png' );
-			
-			$counter =  $this->getEnableForUsersConf() ? $this->getLogCount() : $this->getLogCountConf();
-			
-			if (count($files_draw_layer) >= $counter)
-			{
-				usort($files_draw_layer, function($a, $b) {
-					return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
-				});
-					unlink($files_draw_layer[0]); // delete oldest file
-			}
-			
-			if (count($files_full_backup) >= $counter)
-			{
-				usort($files_full_backup, function($a, $b) {
-					return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
-				});
-					unlink($files_full_backup[0]); // delete oldest file
-			}
+		$this->getProcessLocker()->executeUserSolutionUpdateLockOperation(function () use (&$entered_values, $active_id, $pass, $authorized, $solution, $test_id) {
 
-			$matches = array();
-			if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $solution["value2"], $matches) === 1) {
-				file_put_contents($filename, base64_decode($matches['base64']));
-				// Option to save the complete presentation into the log instead the plain participants drawing 
+			$this->removeCurrentSolution($active_id, $pass, $authorized);
+			
+			if (strlen($solution["value2"]) > 0) {
+				$microtime = round(microtime(true) * 1000);
+				$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask_" . $pass . ".png";
 				
-				$backgroundLog =  $this->getEnableForUsersConf() ? $this->getLogBkgr() : $this->getLogBkgrConf();				
-				
-				if ($backgroundLog && $this->getImageFilename()) {
+				if (!@file_exists($this->getFileUploadPath($test_id, $active_id)))
+					ilUtil::makeDirParents($this->getFileUploadPath($test_id, $active_id));
 					
-					 //get background and save in var
-					 if ($this->getImageFilename())
-					 {
-					 $pathToImage = $this->getImagePath() . $this->getImageFilename();
-					 
-					 list ( $width, $height, $type ) = getimagesize ( $pathToImage );
-					 
-					 switch ( $type )
-					 {
-					 case 1:
-					 $background = imagecreatefromgif ($pathToImage);
-					 break;
-					 case 2:
-					 $background = imagecreatefromjpeg ($pathToImage);
-					 break;
-					 case 3:
-					 $background = imagecreatefrompng ($pathToImage);
-					 }
-					 //predefine picture in case no drawing exists -> show only background image
-					 ob_start();
-					 imagepng($background);
-					 $image = ob_get_clean();
-					 $base64 = base64_encode( $image );
-					 } else
-					 {
-					 //transparent pixel, no background
-					 //will be overwritten if drawing exists
-					 $base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
-					 }
-					 if ($this->getRadioOption() == "radioOwnSize")
-					 {
-					 
-					 } else // radioImageSize
-					 {
-					 if( $this->getImageFilename() )
-					 {
-					 $image = $this->getImagePath() . $this->getImageFilename();
-					 $size = getimagesize($image);
-					 }
-					 }
-					 
-					 $content = file_get_contents ( $filename);
-					 
-					 //merge background and drawing if backgroundimage available
-					 if( $this->getImageFilename() )
-					 {
-					 $drawing = imagecreatefromstring($content);
-					 
-					 $x1 = imagesx($background);
-					 $y1 = imagesy($background);
-					 $x2 = imagesx($drawing);
-					 $y2 = imagesy($drawing);
-					 
-					 imagecopyresampled(
-					 $background, $drawing,
-					 0, 0, 0, 0,
-					 $x1, $y1,
-					 $x2, $y2);
-					 
-					 ob_start();
-					 //resizing the picture to custom values
-					 if ($this->getRadioOption() == "radioOwnSize")
-					 {
-					 $resized=imagecreatetruecolor($this->getCanvasWidth(),$this->getCanvasHeight());
-					 imagecopyresampled($resized,$background,0,0,0,0,$this->getCanvasWidth(),$this->getCanvasHeight(),$x1,$y1);
-					 imagepng($resized);
-					 } else //use original background
-					 {
-					 imagepng($background);
-					 }
-					 $image = ob_get_clean();
-					 $base64 = base64_encode( $image );
-					 imagedestroy($background);
-					 imagedestroy($drawing);
-					 } else //only use the drawing
-					 {
-					 $base64 = base64_encode( $content );
-					 }
-					 file_put_contents($this->getFileUploadPath($test_id, $active_id).$microtime.'_PaintTask_full_backup_' . $pass . '.png' , base64_decode($base64));
-				}
-			} else {
-				throw new InvalidArgumentException("failed to decode and save image.");
+					// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
+					// Grab all files from the desired folder
+					$files_draw_layer = glob( $this->getFileUploadPath($test_id, $active_id).'*PaintTask_' . $pass . '.png' );
+					$files_full_backup = glob( $this->getFileUploadPath($test_id, $active_id).'*full_backup_' . $pass . '.png' );
+					
+					$counter =  $this->getEnableForUsersConf() ? $this->getLogCount() : $this->getLogCountConf();
+					
+					if (count($files_draw_layer) >= $counter)
+					{
+						usort($files_draw_layer, function($a, $b) {
+							return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
+						});
+							unlink($files_draw_layer[0]); // delete oldest file
+					}
+					
+					if (count($files_full_backup) >= $counter)
+					{
+						usort($files_full_backup, function($a, $b) {
+							return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
+						});
+							unlink($files_full_backup[0]); // delete oldest file
+					}
+					
+					$matches = array();
+					if(preg_match('/^data:image\/png;base64,(?<base64>.+)$/', $solution["value2"], $matches) === 1) {
+						file_put_contents($filename, base64_decode($matches['base64']));
+						// Option to save the complete presentation into the log instead the plain participants drawing
+						
+						$backgroundLog =  $this->getEnableForUsersConf() ? $this->getLogBkgr() : $this->getLogBkgrConf();
+						
+						if ($backgroundLog && $this->getImageFilename()) {
+							
+							//get background and save in var
+							if ($this->getImageFilename())
+							{
+								$pathToImage = $this->getImagePath() . $this->getImageFilename();
+								
+								list ( $width, $height, $type ) = getimagesize ( $pathToImage );
+								
+								switch ( $type )
+								{
+									case 1:
+										$background = imagecreatefromgif ($pathToImage);
+										break;
+									case 2:
+										$background = imagecreatefromjpeg ($pathToImage);
+										break;
+									case 3:
+										$backgroundInput = imagecreatefrompng ($pathToImage);
+										// Steps to convert transparency to white (instead of default black)
+										$backgroundWidth = imagesx($backgroundInput);
+										$backgroundHeight = imagesy($backgroundInput);
+										$background = imagecreatetruecolor($backgroundWidth, $backgroundHeight);
+										$white = imagecolorallocate($background,  255, 255, 255);
+										imagefilledrectangle($background, 0, 0, $backgroundWidth, $backgroundHeight, $white);
+										imagecopy($background, $backgroundInput, 0, 0, 0, 0, $backgroundWidth, $backgroundHeight);
+								}
+								//predefine picture in case no drawing exists -> show only background image
+								ob_start();
+								imagepng($background);
+								$image = ob_get_clean();
+								$base64 = base64_encode( $image );
+							} else
+							{
+								//transparent pixel, no background
+								//will be overwritten if drawing exists
+								$base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
+							}
+							if ($this->getRadioOption() == "radioOwnSize")
+							{
+								
+							} else // radioImageSize
+							{
+								if( $this->getImageFilename() )
+								{
+									$image = $this->getImagePath() . $this->getImageFilename();
+									$size = getimagesize($image);
+								}
+							}
+							
+							$content = file_get_contents ( $filename);
+							
+							//merge background and drawing if backgroundimage available
+							if( $this->getImageFilename() )
+							{
+								$drawing = imagecreatefromstring($content);
+								
+								$x1 = imagesx($background);
+								$y1 = imagesy($background);
+								$x2 = imagesx($drawing);
+								$y2 = imagesy($drawing);
+								
+								imagecopyresampled(
+										$background, $drawing,
+										0, 0, 0, 0,
+										$x1, $y1,
+										$x2, $y2);
+								
+								ob_start();
+								//resizing the picture to custom values
+								if ($this->getRadioOption() == "radioOwnSize")
+								{
+									$resized=imagecreatetruecolor($this->getCanvasWidth(),$this->getCanvasHeight());
+									imagecopyresampled($resized,$background,0,0,0,0,$this->getCanvasWidth(),$this->getCanvasHeight(),$x1,$y1);
+									imagepng($resized);
+								} else //use original background
+								{
+									imagepng($background);
+								}
+								$image = ob_get_clean();
+								$base64 = base64_encode( $image );
+								imagedestroy($background);
+								imagedestroy($drawing);
+							} else //only use the drawing
+							{
+								$base64 = base64_encode( $content );
+							}
+							file_put_contents($this->getFileUploadPath($test_id, $active_id).$microtime.'_PaintTask_full_backup_' . $pass . '.png' , base64_decode($base64));
+						}
+					} else {
+						throw new InvalidArgumentException("failed to decode and save image.");
+					}
+
+				$this->saveCurrentSolution($active_id, $pass, $solution["value1"], $filename, $authorized);
+				$entered_values = true;
 			}
+		});
+			
+		// Log whether the user entered values
+		if (ilObjAssessmentFolder::_enabledAssessmentLogging())
+		{
+			assQuestion::logAction($this->lng->txtlng(
+					'assessment',
+					$entered_values ? 'log_user_entered_values' : 'log_user_not_entered_values',
+					ilObjAssessmentFolder::_getLogLanguage()
+					),
+					$active_id,
+					$this->getId()
+					);
 		}
 		
-		if ($entered_values)
-		{
-			include_once ("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
-			if (ilObjAssessmentFolder::_enabledAssessmentLogging())
-			{
-				$this->logAction($this->lng->txtlng("assessment", "log_user_entered_values", ilObjAssessmentFolder::_getLogLanguage()), $active_id, $this->getId());				
-			}
-		}
-		else
-		{
-			include_once ("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
-			if (ilObjAssessmentFolder::_enabledAssessmentLogging())
-			{
-				$this->logAction($this->lng->txtlng("assessment", "log_user_not_entered_values", ilObjAssessmentFolder::_getLogLanguage()), $active_id, $this->getId());
-			}
-		}		
+		// submitted solution is valid
 		return true;
+		
+		
 	}
-	
+
 	/**
 	 * Reworks the allready saved working data if neccessary
 	 *
