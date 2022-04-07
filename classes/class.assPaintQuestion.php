@@ -309,7 +309,14 @@ class assPaintQuestion extends assQuestion
 				$image= imagecreatefromjpeg ($path);
 				break;
 			case 3:
-				$image= imagecreatefrompng ($path);
+			    $input = imagecreatefrompng ($path);
+			    // Steps to convert transparency to white (instead of default black)
+			    $backgroundWidth = imagesx($input);
+			    $backgroundHeight = imagesy($input);
+			    $image = imagecreatetruecolor($backgroundWidth, $backgroundHeight);
+			    $white = imagecolorallocate($image,  255, 255, 255);
+			    imagefilledrectangle($image, 0, 0, $backgroundWidth, $backgroundHeight, $white);
+			    imagecopy($image, $input, 0, 0, 0, 0, $backgroundWidth, $backgroundHeight);
 		}
 		
 		// Neue Größe berechnen
