@@ -4,12 +4,12 @@
 $id = "assPaintQuestion";
  
 // code version; must be changed for all code changes
-$version = "6.0.0";
+$version = "7.0.0";
  
 // ilias min and max version; must always reflect the versions that should
 // run with the plugin
-$ilias_min_version = "6.0";
-$ilias_max_version = "6.999";
+$ilias_min_version = "7.13";
+$ilias_max_version = "7.99";
 
 //09/2014:
 //$responsible = "Yves Annanias";

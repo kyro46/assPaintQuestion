@@ -25,7 +25,7 @@ class assPaintQuestionImport extends assQuestionImport
 	* @param array $import_mapping An array containing references to included ILIAS objects
 	* @access public
 	*/
-	function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping)
+    function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping, array $solutionhints = [])
 	{
 		global $ilUser;
 
@@ -269,7 +269,18 @@ class assPaintQuestionImport extends assQuestionImport
 			
 		// Now save the question again
 		$this->object->saveToDb();
-
+		
+		// Save solutionhints
+		foreach ($solutionhints as $hint) {
+		    $h = new ilAssQuestionHint();
+		    $h->setQuestionId($this->object->getId());
+		    $h->setIndex($hint['index']);
+		    $h->setPoints($hint['points']);
+		    $h->setText($hint['txt']);
+		    $h->save();
+		}
+		
+		
 		// import mapping for tests
 		if ($tst_id > 0)
 		{
