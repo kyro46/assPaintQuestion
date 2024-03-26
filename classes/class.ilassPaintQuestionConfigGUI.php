@@ -1,22 +1,20 @@
 <?php
 
-include_once("./Services/Component/classes/class.ilPluginConfigGUI.php");
-
 /**
  * Plugin configuration class
  * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
+ * @ilCtrl_IsCalledBy ilassPaintQuestionConfigGUI: ilObjComponentSettingsGUI
  */
 class ilassPaintQuestionConfigGUI extends ilPluginConfigGUI
-{   
-    
-    protected $plugin_object = null;
-    
+{       
     /**
      * Handles all commmands,
      * $cmd = functionName()
      */
-    function performCommand($cmd)
+    public function performCommand($cmd) : void
     {
+        $this->plugin = $this->getPluginObject();
+        
         switch ($cmd)
         {
             case "configure":
@@ -46,6 +44,7 @@ class ilassPaintQuestionConfigGUI extends ilPluginConfigGUI
             $ilDB->manipulate("DELETE FROM il_qpl_qst_paint_conf");
             $ilDB->insert("il_qpl_qst_paint_conf",
                 array(
+                    "id"                     	=>	array("integer", 0),
                     "enable_for_users_conf" 	=>	array("integer", $enableForUsers),
                     "log_count_conf" 	        =>  array("integer", $logCount),
                     "log_bkgr_conf" 	     	=>  array("integer", $logBkgr),
@@ -78,9 +77,7 @@ class ilassPaintQuestionConfigGUI extends ilPluginConfigGUI
      * @return object form object
      */
     public function initConfigurationForm()
-    {
-        $plugin = new ilassPaintQuestionPlugin();
-        
+    {       
         global $lng, $ilCtrl, $ilDB;
 
         $result = $ilDB->query("SELECT enable_for_users_conf, log_count_conf, log_bkgr_conf FROM il_qpl_qst_paint_conf where id = 0" );
@@ -90,27 +87,27 @@ class ilassPaintQuestionConfigGUI extends ilPluginConfigGUI
         $form = new ilPropertyFormGUI();
 
         //Enable for users
-        $enableForUsers = new ilCheckboxInputGUI($plugin->txt("enableForUsers"), 'enableForUsers');
-        $enableForUsers->setInfo($plugin->txt("enableForUsers_hint"));
+        $enableForUsers = new ilCheckboxInputGUI($this->plugin->txt("enableForUsers"), 'enableForUsers');
+        $enableForUsers->setInfo($this->plugin->txt("enableForUsers_hint"));
         if ($configuration['enable_for_users_conf'])
             $enableForUsers->setChecked(true);
         $form->addItem($enableForUsers);
         
         //LogCount
-        $logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCountValue");
-        $logCountOption->setInfo($plugin->txt("logCountOption_hint"));
-        $logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
+        $logCountOption = new ilSelectInputGUI($this->plugin->txt("logCountOption"),"logCountValue");
+        $logCountOption->setInfo($this->plugin->txt("logCountOption_hint"));
+        $logCountOption->setOptions (Array ( "1" => $this->plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
         $logCountOption->setValue($configuration['log_count_conf']);
         $form->addItem($logCountOption);
         
         //LogBkgr
-        $logBkgrOption = new ilCheckboxInputGUI($plugin->txt("logBkgrOption"), 'logBkgrValue');
-        $logBkgrOption->setInfo($plugin->txt("logBkgrOption_hint"));
+        $logBkgrOption = new ilCheckboxInputGUI($this->plugin->txt("logBkgrOption"), 'logBkgrValue');
+        $logBkgrOption->setInfo($this->plugin->txt("logBkgrOption_hint"));
         if ($configuration['log_bkgr_conf'])
             $logBkgrOption->setChecked(true);
          $form->addItem($logBkgrOption);
             
-         $form->addCommandButton("save", $plugin->txt("save"));
+         $form->addCommandButton("save", $this->plugin->txt("save"));
             
             $form->setFormAction($ilCtrl->getFormAction($this));
             

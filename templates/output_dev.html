@@ -11,6 +11,8 @@
     position: relative;
   }
 </style>
+<script src="Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_js_libs/react-0.14.3.js"></script>
+<script src="Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_js_libs/literallycanvas.js"></script>
 
 <div class="fs-container_{PAINT_ID}">
 <div id="lc_{PAINT_ID}" style="height:{HEIGHT_DIV}px; width:{WIDTH}px; margin: auto;"></div>
@@ -19,7 +21,6 @@
 <textarea id="answerJSON_{PAINT_ID}" name="answerJSON_{PAINT_ID}" cols="50" rows="10" style="display:none;">{RESUMEJSON}</textarea>
 <textarea id="answerImage_{PAINT_ID}" name="answerImage_{PAINT_ID}" cols="50" rows="10" style="display:none;">{RESUME}</textarea>
 <script type="text/javascript">
-
 	var loadJSON_{PAINT_ID} = '{RESUMEJSON}';
 	var backgroundImage_{PAINT_ID} = new Image();
 	backgroundImage_{PAINT_ID}.src =  "{BACKGROUND}";

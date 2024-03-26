@@ -1,7 +1,8 @@
 # assPaintQuestion
-Paint-Questiontypeplugin for ILIAS 7
+Paint-Questiontypeplugin for ILIAS 8
 
-For ILIAS 4.3 to 6 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases)
+For ILIAS 4.3 to 7 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases), for ILIAS 7 also see the corresponding [**Branch**](https://github.com/kyro46/assPaintQuestion/tree/ilias_7)
+
 
 ### Questiontype that allows drawing on a backgroundimage or a plain canvas ###
 

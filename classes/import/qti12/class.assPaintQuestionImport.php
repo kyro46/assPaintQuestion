@@ -25,8 +25,8 @@ class assPaintQuestionImport extends assQuestionImport
 	* @param array $import_mapping An array containing references to included ILIAS objects
 	* @access public
 	*/
-    function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping, array $solutionhints = [])
-	{
+    function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, $import_mapping, array $solutionhints = []) : array
+    {
 		global $ilUser;
 
 		// empty session variable for imported xhtml mobs
@@ -99,7 +99,7 @@ class assPaintQuestionImport extends assQuestionImport
 		$this->object->setOwner($ilUser->getId());
 		$this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
 		$this->object->setObjId($questionpool_id);
-		$this->object->setEstimatedWorkingTime($duration["h"], $duration["m"], $duration["s"]);		
+		//$this->object->setEstimatedWorkingTime($duration["h"], $duration["m"], $duration["s"]);		
 		$this->object->setPoints($item->getMetadataEntry("POINTS"));
 		$this->object->setLineValue($item->getMetadataEntry("allowDifferentLineSize"));
 		$this->object->setColorValue($item->getMetadataEntry("allowDifferentColors"));
@@ -179,7 +179,7 @@ class assPaintQuestionImport extends assQuestionImport
 			if (!file_exists($imagepath))
 			{
 				include_once "./Services/Utilities/classes/class.ilUtil.php";
-				ilUtil::makeDirParents($imagepath);
+				ilFileUtils::makeDirParents($imagepath);
 			}
 			$imagepath .=  $questionimage["label"];
 			$fh = fopen($imagepath, "wb");
@@ -246,7 +246,7 @@ class assPaintQuestionImport extends assQuestionImport
 		    if (!file_exists($imagepath))
 		    {
 		        include_once "./Services/Utilities/classes/class.ilUtil.php";
-		        ilUtil::makeDirParents($imagepath);
+		        ilFileUtils::makeDirParents($imagepath);
 		    }
 		    $imagepath .= $this->object->getImageFilenameBestsolution();
 		    $fh = fopen($imagepath, "wb");
@@ -293,6 +293,8 @@ class assPaintQuestionImport extends assQuestionImport
 		{
 			$import_mapping[$item->getIdent()] = array("pool" => $this->object->getId(), "test" => 0);
 		}
+		
+		return $import_mapping;
 	}
 }
 

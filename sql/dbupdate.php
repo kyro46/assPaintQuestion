@@ -56,7 +56,7 @@
 <#4>
 <?php
 	//Create missing scaled images on update
-	$web_path = ilUtil::getWebspaceDir();
+	$web_path = ilFileUtils::getWebspaceDir();
 	$assessment_path = $web_path."/assessment/";
 
 	//list of paint questions with resized images: question_id, obj_fi, image_file, width, height
@@ -163,4 +163,9 @@
 	$ilDB->createTable("il_qpl_qst_paint_conf", $fields);
 	$ilDB->addPrimaryKey("il_qpl_qst_paint_conf", array("id"));
 	$ilDB->manipulate('INSERT INTO il_qpl_qst_paint_conf (id, enable_for_users_conf, log_count_conf, log_bkgr_conf) VALUES (0, 0, 3, 0)');
+?>
+<#9>
+<?php
+	//Default for id column in config table
+	$ilDB->manipulate('ALTER TABLE il_qpl_qst_paint_conf ALTER id SET DEFAULT 0;');
 ?>

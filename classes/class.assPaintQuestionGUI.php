@@ -1,8 +1,5 @@
 <?php
 
-include_once "./Modules/TestQuestionPool/classes/class.assQuestionGUI.php";
-include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
-
  /**
  * The assPaintQuestionGUI class encapsulates the GUI representation
  * for Question-Type-Plugin.
@@ -10,14 +7,27 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
  * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
  * @ingroup ModulesTestQuestionPool
- *
+ * 
  * @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
- * @ilCtrl_Calls assPaintQuestionGUI: ilFormPropertyDispatchGUI
+ * @ilctrl_calls assPaintQuestionGUI: ilFormPropertyDispatchGUI
  */
 class assPaintQuestionGUI extends assQuestionGUI
-{		
+{	 
+    /**
+    * @const	string	URL base path for including special javascript and css files
+    */
+    const URL_PATH = "./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion";
+
+    /**
+     * @const	string 	URL suffix to prevent caching of css files (increase with every change)
+     * 					Note: this does not yet work with $tpl->addJavascript()
+     */
+    const URL_SUFFIX = "?css_version=1.5.0";
+    
 	var $plugin = null;
 
+	public assQuestion $object;
+	
 	/**
 	 * Constructor
 	 *
@@ -25,15 +35,18 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * @access public
 	 */
 	public function __construct($id = -1)
-	{
+	{	 
+	    global $DIC;
+	    
 		parent::__construct();
-		include_once "./Services/Component/classes/class.ilPlugin.php";
-		$this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, "TestQuestionPool", "qst", "assPaintQuestion");
-		$this->plugin->includeClass("class.assPaintQuestion.php");
+		
+		/** @var ilComponentFactory $component_factory */
+		$component_factory = $DIC["component.factory"];
+		$this->plugin = $component_factory->getPlugin('assPaintQuestion');
 		$this->object = new assPaintQuestion();
 		if ($id >= 0)
 		{
-			$this->object->loadFromDb($id);
+		    $this->object->loadFromDb($id);
 		}
 	}	
 	
@@ -172,7 +185,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * @param bool $always
 	 * @return integer A positive value, if one of the required fields wasn't set, else 0
 	 */
-	public function writePostData($always = false)
+	protected function writePostData($always = false): int
 	{
 	    $hasErrors = (!$always) ? $this->editQuestion(true) : false;
 	    if (!$hasErrors)
@@ -225,18 +238,6 @@ class assPaintQuestionGUI extends assQuestionGUI
 	    }
 	    return 1;
 	}
-
-	/**
-	* check input fields
-	*/
-	function checkInput()
-	{		
-		if ((!$_POST["title"]) or (!$_POST["author"]) or (!$_POST["question"]) or (strlen($_POST["points"]) == 0) or ($_POST["points"] < 0) )
-		{			
-			return FALSE;
-		}	
-		return TRUE;
-	}
 	
 	/**
 	 * Get the output for question preview
@@ -245,8 +246,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * @param boolean	show only the question instead of embedding page (true/false)
 	 */
 	function getPreview($show_question_only = false, $showInlineFeedback = false)
-	{		
-		global $tpl;			
+	{	
+	    global $DIC, $tpl;			
 		$plugin       = $this->object->getPlugin();		
 		$template     = $plugin->getTemplate("output_dev.html");						
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($this->object->getQuestion(), TRUE));
@@ -300,10 +301,10 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$template->setVariable("HEIGHT", 731);
 			}
 		}
-		
-		$tpl->addCss("./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/literallycanvas.css");
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/react-0.14.3.js');
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/literallycanvas.js');		
+
+		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/_assets/literallycanvas.css'.self::URL_SUFFIX);
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/react-0.14.3.js');
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/literallycanvas.js');
 		
 		$template->setVariable("RESUME", "");
 		
@@ -319,27 +320,22 @@ class assPaintQuestionGUI extends assQuestionGUI
 
 	/**
 	 * Get the HTML output of the question for a test
-	 * 
-	 * @param integer $active_id			The active user id
-	 * @param integer $pass					The test pass
-	 * @param boolean $is_postponed			Question is postponed
-	 * @param boolean $use_post_solutions	Use post solutions
-	 * @param boolean $show_feedback		Show a feedback
+	 * (this function could be private)
+	 *
+	 * @param integer $active_id						The active user id
+	 * @param integer $pass								The test pass
+	 * @param boolean $is_postponed						Question is postponed
+	 * @param boolean $use_post_solutions				Use post solutions
+	 * @param boolean $show_specific_inline_feedback	Show a specific inline feedback
 	 * @return string
-	 */	
-	function getTestOutput($active_id, $pass = NULL, $is_postponed = FALSE, $use_post_solutions = FALSE, $show_feedback = FALSE)
-	{
-		global $tpl;
+	 */
+	public function getTestOutput($active_id, $pass = NULL, $is_question_postponed = FALSE, $user_post_solutions = FALSE, $show_specific_inline_feedback = FALSE)	{
+		global $DIC; $tpl;
 		// get the solution of the user for the active pass or from the last pass if allowed
 		$user_solution = array();
 		if ($active_id)
 		{
-			include_once "./Modules/Test/classes/class.ilObjTest.php";
-			if (!ilObjTest::_getUsePreviousAnswers($active_id, true))
-			{
-				if (is_null($pass)) $pass = ilObjTest::_getPass($active_id);
-			}
-			$user_solution =& $this->object->getSolutionValues($active_id, $pass);
+		    $user_solution = $this->object->getSolutionStored($active_id, $pass, true);
 			if (!is_array($user_solution)) 
 			{
 				$user_solution = array();
@@ -372,82 +368,83 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb()."resized_".$this->object->getImageFilename());
 		}
 		
-				if ($this->object->getRadioOption() == "radioOwnSize")
-				{
-					$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
-					$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
-					$template->setVariable("HEIGHT_DIV", $this->object->getCanvasHeight() + 31);
-				} else // use Image Size or default of 800x700
-				{
-					if( $this->object->getImageFilename() )
-					{
-						$image = $this->object->getImagePath().$this->object->getImageFilename();
-						$size = getimagesize($image);
-						$template->setVariable("WIDTH", $size[0] + 61);
-						$template->setVariable("HEIGHT", $size[1] + 31);
-						
-						$height = $size[1] + 31;
-						if ($height < 400) {
-							$template->setVariable("HEIGHT_DIV", 400);
-						} else {
-							$template->setVariable("HEIGHT_DIV", $height);
-						}
-					} else
-					{
-						$template->setVariable("WIDTH", 861);
-						$template->setVariable("HEIGHT", 731);
-					}
+		if ($this->object->getRadioOption() == "radioOwnSize")
+		{
+			$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
+			$template->setVariable("HEIGHT", $this->object->getCanvasHeight() + 31);
+			$template->setVariable("HEIGHT_DIV", $this->object->getCanvasHeight() + 31);
+		} else // use Image Size or default of 800x700
+		{
+			if( $this->object->getImageFilename() )
+			{
+				$image = $this->object->getImagePath().$this->object->getImageFilename();
+				$size = getimagesize($image);
+				$template->setVariable("WIDTH", $size[0] + 61);
+				$template->setVariable("HEIGHT", $size[1] + 31);
+				
+				$height = $size[1] + 31;
+				if ($height < 400) {
+					$template->setVariable("HEIGHT_DIV", 400);
+				} else {
+					$template->setVariable("HEIGHT_DIV", $height);
 				}
+			} else
+			{
+				$template->setVariable("WIDTH", 861);
+				$template->setVariable("HEIGHT", 731);
+			}
+		}
 		
-		$tpl->addCss("./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/literallycanvas.css");
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/react-0.14.3.js');
-		$tpl->addJavaScript($plugin->getDirectory().'/templates/_js_libs/literallycanvas.js');
+		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/_assets/literallycanvas.css'.self::URL_SUFFIX);
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/react-0.14.3.js');
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/literallycanvas.js');
 		
 		// letzte gespeicherte Eingabe anzeigen
 		$base64 = "";
-		if ($user_solution[0]["value2"])
+		if ($user_solution["value2"])
 		{
 			// wenn eingabe vorhanden, dann bild von gegebener url als base64-string konvertieren
-			$content = file_get_contents ( $user_solution[0]["value2"]);
+			$content = file_get_contents ( $user_solution["value2"]);
 			$base64 = 'data:image/png;base64,'.base64_encode( $content );
 		}							
 		
-		if ($user_solution[0]["value2"] != 'path'){
-			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",$user_solution[0]["value1"]));
+		if ($user_solution["value2"] != 'path'){
+			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",$user_solution["value1"]));
 		}
-		$template->setVariable("RESUME", ilUtil::prepareFormOutput($base64));	
+		$template->setVariable("RESUME", ilLegacyFormElementsUtil::prepareFormOutput($base64));	
 		
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
 		$questionoutput = $template->get();
-		$pageoutput = $this->outQuestionPage("", $is_postponed, $active_id, $questionoutput);
+		$pageoutput = $this->outQuestionPage("", $is_question_postponed, $active_id, $questionoutput);
 		return $pageoutput;		
 	}
 
 	/**
-	* Get the question solution output
-	*
-	* @param integer $active_id The active user id
-	* @param integer $pass The test pass
-	* @param boolean $graphicalOutput Show visual feedback for right/wrong answers
-	* @param boolean $result_output Show the reached points for parts of the question
-	* @param boolean $show_question_only Show the question without the ILIAS content around
-	* @param boolean $show_feedback Show the question feedback
-	* @param boolean $show_correct_solution Show the correct solution instead of the user solution
-	* @param boolean $show_manual_scoring Show specific information for the manual scoring output
-	* @return string The solution output of the question as HTML code
-	*/
+	 * Get the question solution output
+	 * @param integer $active_id             The active user id
+	 * @param integer $pass                  The test pass
+	 * @param boolean $graphicalOutput       Show visual feedback for right/wrong answers
+	 * @param boolean $result_output         Show the reached points for parts of the question
+	 * @param boolean $show_question_only    Show the question without the ILIAS content around
+	 * @param boolean $show_feedback         Show the question feedback
+	 * @param boolean $show_correct_solution Show the correct solution instead of the user solution
+	 * @param boolean $show_manual_scoring   Show specific information for the manual scoring output
+	 * @param bool    $show_question_text
+	 
+	 * @return string solution output of the question as HTML code
+	 */
 	function getSolutionOutput(
-		$active_id,
-		$pass = NULL,
-		$graphicalOutput = FALSE,
-		$result_output = FALSE,
-		$show_question_only = TRUE,
-		$show_feedback = FALSE,
-		$show_correct_solution = FALSE,
-		$show_manual_scoring = FALSE,
-		$show_question_text = TRUE
-	)
-	{
+	    $active_id,
+	    $pass = NULL,
+	    $graphicalOutput = FALSE,
+	    $result_output = FALSE,
+	    $show_question_only = TRUE,
+	    $show_feedback = FALSE,
+	    $show_correct_solution = FALSE,
+	    $show_manual_scoring = FALSE,
+	    $show_question_text = TRUE
+    ): string
+    {
 		global $tpl;
 		// get the solution of the user for the active pass or from the last pass if allowed
 		$user_solution = array();
@@ -518,7 +515,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
 		}
 		//preset formular
-		$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));
+		$template->setVariable("SOLUTION", ilLegacyFormElementsUtil::prepareFormOutput($base64));
 
 		
 		if ($this->object->getRadioOption() == "radioOwnSize")
@@ -583,7 +580,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 						$base64 = base64_encode( $content );
 					} 
 				}
-				$template->setVariable("SOLUTION", ilUtil::prepareFormOutput($base64));		
+				$template->setVariable("SOLUTION", ilLegacyFormElementsUtil::prepareFormOutput($base64));		
 		}		
 
 		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
@@ -616,143 +613,28 @@ class assPaintQuestionGUI extends assQuestionGUI
 		
 		return $solutionoutput;
 	}
-
-	/**
-	* Saves the feedback for the question
-	*
-	* @access public
-	*/
-	function saveFeedback()
-	{		
-		include_once "./Services/AdvancedEditing/classes/class.ilObjAdvancedEditing.php";
-		$this->object->saveFeedbackGeneric(0, $_POST["feedback_incomplete"]);
-		$this->object->saveFeedbackGeneric(1, $_POST["feedback_complete"]);
-		$this->object->cleanupMediaObjectUsage();
-		parent::saveFeedback();
-	}
-
-	/**	
-	 * Sets the ILIAS tabs for this question type
-	 * @access public
-	 */
-	function setQuestionTabs()
-	{
-		global $rbacsystem, $ilTabs;
-
-		$this->ctrl->setParameterByClass("ilAssQuestionPageGUI", "q_id", $_GET["q_id"]);
-		include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
-		$q_type = $this->object->getQuestionType();
-
-		if(strlen($q_type))
-		{
-			$classname = $q_type . "GUI";
-			$this->ctrl->setParameterByClass(strtolower($classname), "sel_question_types", $q_type);
-			$this->ctrl->setParameterByClass(strtolower($classname), "q_id", $_GET["q_id"]);
-		}
-
-		if($_GET["q_id"])
-		{
-			if($rbacsystem->checkAccess('write', $_GET["ref_id"]))
-			{
-				// edit page
-				$ilTabs->addTarget("edit_content",
-					$this->ctrl->getLinkTargetByClass("ilAssQuestionPageGUI", "edit"),
-					array("edit", "insert", "exec_pg"),
-					"", "", $force_active);
-			}
-
-			// edit page
-			$ilTabs->addTarget("preview",
-				$this->ctrl->getLinkTargetByClass("ilAssQuestionPageGUI", "preview"),
-				array("preview"),
-				"ilAssQuestionPageGUI", "", $force_active);
-		}
-
-		$force_active = false;
-		if($rbacsystem->checkAccess('write', $_GET["ref_id"]))
-		{
-			$url = "";
-		
-			if($classname) $url = $this->ctrl->getLinkTargetByClass($classname, "editQuestion");
-			$commands = $_POST["cmd"];
-			if(is_array($commands))
-			{
-				foreach($commands as $key => $value)
-				{
-					if(preg_match("/^suggestrange_.*/", $key, $matches))
-					{
-						$force_active = true;
-					}
-				}
-			}
-			// edit question properties
-			$ilTabs->addTarget("edit_properties",
-				$url,
-				array(
-					"editQuestion", "save", "cancel", "addSuggestedSolution",
-					"cancelExplorer", "linkChilds", "removeSuggestedSolution",
-					"saveEdit", "suggestRange"
-				),
-				$classname, "", $force_active);						
-		}
-		/*
-		if($_GET["q_id"])
-		{
-			$ilTabs->addTarget("feedback",
-				$this->ctrl->getLinkTargetByClass($classname, "feedback"),
-				array("feedback", "saveFeedback"),
-				$classname, "");
-		}
-		*/
-		// add tab for question feedback within common class assQuestionGUI
-        $this->addTab_QuestionFeedback($ilTabs);
-		// add tab for question hint within common class assQuestionGUI
-		$this->addTab_QuestionHints($ilTabs);
-
-		if ($_GET["q_id"])
-		{
-			$ilTabs->addTarget("solution_hint",
-				$this->ctrl->getLinkTargetByClass($classname, "suggestedsolution"),
-				array("suggestedsolution", "saveSuggestedSolution", "outSolutionExplorer", "cancel", 
-				"addSuggestedSolution","cancelExplorer", "linkChilds", "removeSuggestedSolution"
-				),
-				$classname, 
-				""
-			);
-		}
-
-		// Assessment of questions sub menu entry
-		if($_GET["q_id"])
-		{
-			$ilTabs->addTarget("statistics",
-				$this->ctrl->getLinkTargetByClass($classname, "assessment"),
-				array("assessment"),
-				$classname, "");
-		}
-
-		if(($_GET["calling_test"] > 0) || ($_GET["test_ref_id"] > 0))
-		{
-			$ref_id = $_GET["calling_test"];
-			if(strlen($ref_id) == 0) $ref_id = $_GET["test_ref_id"];
-			$ilTabs->setBackTarget($this->lng->txt("backtocallingtest"), "ilias.php?baseClass=ilObjTestGUI&cmd=questions&ref_id=$ref_id");
-		}
-		else
-		{
-			$ilTabs->setBackTarget($this->lng->txt("qpl"), $this->ctrl->getLinkTargetByClass("ilobjquestionpoolgui", "questions"));
-		}
-	}	
 	
 	/**
 	 * Returns the answer specific feedback for the question
-	 * 
-	 * @param integer $active_id Active ID of the user
-	 * @param integer $pass Active pass
+	 *
+	 * @param array $userSolution Array with the user solutions
 	 * @return string HTML Code with the answer specific feedback
 	 * @access public
 	 */
-	public function getSpecificFeedbackOutput($usersolution)
+	public function getSpecificFeedbackOutput($userSolution): string
 	{
-		return "";
+	    // By default no answer specific feedback is defined
+	    $output = '';
+	    return $this->object->prepareTextareaOutput($output, TRUE);
+	}
+	
+	/**
+	 * Sets the ILIAS tabs for this question type
+	 * called from ilObjTestGUI and ilObjQuestionPoolGUI
+	 */
+	public function setQuestionTabs(): void
+	{
+	    parent::setQuestionTabs();
 	}
 }
 ?>

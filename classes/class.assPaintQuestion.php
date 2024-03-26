@@ -1,8 +1,5 @@
 <?php
 
-include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
-include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
-
 /**
  * Class for TemplateQuestion Question
  *
@@ -13,7 +10,7 @@ include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
  */
 class assPaintQuestion extends assQuestion
 {
-	private $plugin = null;	
+    protected $plugin = null;	
 	// backgroundimage	
 	var $image_filename = "";
 	// brushsize choosable? false - 0, true - 1
@@ -41,18 +38,19 @@ class assPaintQuestion extends assQuestion
 	var $enableForUsersConf = 0;
 
 	/**
-	* assPaintQuestion constructor
-	*
-	* The constructor takes possible arguments an creates an instance of the assPaintQuestion object.
-	*
-	* @param string $title A title string to describe the question
-	* @param string $comment A comment string to describe the question
-	* @param string $author A string containing the name of the questions author
-	* @param integer $owner A numerical ID to identify the owner/creator
-	* @param string $question The question string of the single choice question
-	* @access public
-	* @see assQuestion:assQuestion()
-	*/
+	 * Constructor
+	 *
+	 * The constructor takes possible arguments and creates an instance of the question object.
+	 *
+	 * @param string $title A title string to describe the question
+	 * @param string $comment A comment string to describe the question
+	 * @param string $author A string containing the name of the questions author
+	 * @param integer $owner A numerical ID to identify the owner/creator
+	 * @param string $question Question text
+	 * @access public
+	 *
+	 * @see assQuestion:assQuestion()
+	 */
 	function __construct(
 		$title = "",
 		$comment = "",
@@ -68,15 +66,54 @@ class assPaintQuestion extends assQuestion
 	}
 	
 	/**
+	 * Returns the question type of the question
+	 *
+	 * @return string The question type of the question
+	 */
+	function getQuestionType() : string
+	{
+	    return "assPaintQuestion";
+	}
+	
+	/**
+	 * Returns the names of the additional question data tables
+	 *
+	 * All tables must have a 'question_fi' column.
+	 * Data from these tables will be deleted if a question is deleted
+	 *
+	 * @return mixed 	the name(s) of the additional tables (array or string)
+	 */
+	function getAdditionalTableName()
+	{
+	    return array(  'il_qpl_qst_paint_check',
+	                   'il_qpl_qst_paint_image');
+	}
+
+	/**
+	 * Collects all texts in the question which could contain media objects
+	 * which were created with the Rich Text Editor
+	 */
+	protected function getRTETextWithMediaObjects(): string
+	{
+	    $text = parent::getRTETextWithMediaObjects();
+	    return $text;
+	}
+	
+	/**
+	 * Get the plugin object
+	 *
 	 * @return object The plugin object
 	 */
 	public function getPlugin() {
-		if ($this->plugin == null)
-		{
-			include_once "./Services/Component/classes/class.ilPlugin.php";
-			$this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, "TestQuestionPool", "qst", "assPaintQuestion");			
-		}
-		return $this->plugin;
+	    global $DIC;
+	    
+	    if ($this->plugin == null)
+	    {
+	        /** @var ilComponentFactory $component_factory */
+	        $component_factory = $DIC["component.factory"];
+	        $this->plugin = $component_factory->getPlugin('assPaintQuestion');
+	    }
+	    return $this->plugin;
 	}
 	
 	/**
@@ -84,11 +121,11 @@ class assPaintQuestion extends assQuestion
 	 *
 	 * @return boolean True, if the question is complete for use, otherwise false
 	 */
-	public function isComplete()
+	public function isComplete(): bool
 	{
 		// Please add here your own check for question completeness
 		// The parent function will always return false
-		if(($this->title) and ($this->author) and ($this->question) and ($this->getMaximumPoints() > 0))
+	    if(!empty($this->title) && !empty($this->author) && !empty($this->question) && $this->getMaximumPoints() > 0)
 		{
 			return true;
 		}
@@ -112,8 +149,9 @@ class assPaintQuestion extends assQuestion
 
 	function deleteImage()
 	{
-		global $ilDB;
-		
+	    global $DIC;
+	    $ilDB = $DIC->database();
+	    
 		$file = $this->getImagePath() . $this->getImageFilename();
 		$file_resized = $this->getImagePath() ."resized_".$this->getImageFilename();
 		@unlink($file); // delete image from folder
@@ -124,7 +162,8 @@ class assPaintQuestion extends assQuestion
 
 	function deleteImageBestsolution()
 	{
-	    global $ilDB;
+	    global $DIC;
+	    $ilDB = $DIC->database();
 	    
 	    $file = $this->getImagePath() . $this->getImageFilenameBestsolution();	    
 	    @unlink($file); // delete image from folder
@@ -183,12 +222,12 @@ class assPaintQuestion extends assQuestion
 	
 	function setResizedImageStatus($value)
 	{
-		$this->$resizedImageStatus = $value;
+		$this->resizedImageStatus = $value;
 	}
 	
 	function getResizedImageStatus()
 	{
-		return $this->$resizedImageStatus;
+		return $this->resizedImageStatus;
 	}
 	
 	function setLogCount($value)
@@ -244,7 +283,7 @@ class assPaintQuestion extends assQuestion
 			$imagepath = $this->getImagePath();
 			if (!file_exists($imagepath)) 
 			{
-				ilUtil::makeDirParents($imagepath);
+			    ilFileUtils::makeDirParents($imagepath);
 			}
 			//** TODO  hier kommt noch eine Fehlermeldung, obwohl das Bild am Ende im richtigen Ornder liegt
 			
@@ -276,7 +315,7 @@ class assPaintQuestion extends assQuestion
 	        $imagepath = $this->getImagePath();
 	        if (!file_exists($imagepath))
 	        {
-	            ilUtil::makeDirParents($imagepath);
+	            ilFileUtils::makeDirParents($imagepath);
 	        }
 	        //** TODO  hier kommt noch eine Fehlermeldung, obwohl das Bild am Ende im richtigen Ornder liegt
 	        
@@ -290,8 +329,9 @@ class assPaintQuestion extends assQuestion
 
 	function resizeImage($width, $height){
 		
-		global $ilDB;
-		
+	    global $DIC;
+	    $ilDB = $DIC->database();
+	    
 		//error_log($this->getImagePath());
 		//error_log($this->getImageFilename());
 		
@@ -346,98 +386,28 @@ class assPaintQuestion extends assQuestion
 		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 1 .' '.'WHERE question_fi = '.$this->getId());
 	}
 	
-	
 	/**
-	 * Loads a question object from a database
-	 * This has to be done here (assQuestion does not load the basic data)!
+	 * Saves a question object to a database
 	 *
-	 * @param integer $question_id A unique key which defines the question in the database
-	 * @see assQuestion::loadFromDb()
+	 * @param	string		$original_id
+	 * @access 	public
+	 * @see assQuestion::saveToDb()
 	 */
-	public function loadFromDb($question_id)
+	function saveToDb($original_id = ''): void
 	{
-		global $ilDB;
-                
-		// load the basic question data
-		$result = $ilDB->query("SELECT qpl_questions.* FROM qpl_questions WHERE question_id = "
-				. $ilDB->quote($question_id, 'integer'));
-
-		$data = $ilDB->fetchAssoc($result);
-		$this->setId($question_id);
-		$this->setTitle($data["title"]);
-		$this->setComment($data["description"]);
-		$this->setSuggestedSolution($data["solution_hint"]);
-		$this->setOriginalId($data["original_id"]);
-		$this->setObjId($data["obj_fi"]);
-		$this->setAuthor($data["author"]);
-		$this->setOwner($data["owner"]);
-		$this->setPoints($data["points"]);		
-
-		include_once("./Services/RTE/classes/class.ilRTE.php");
-		$this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data["question_text"], 1));
-		$this->setEstimatedWorkingTime(substr($data["working_time"], 0, 2), substr($data["working_time"], 3, 2), substr($data["working_time"], 6, 2));			
-
-		try {
-			$this->setLifecycle(ilAssQuestionLifecycle::getInstance($data['lifecycle']));
-		} catch (ilTestQuestionPoolInvalidArgumentException $e) {
-			$this->setLifecycle(ilAssQuestionLifecycle::getDraftInstance());
-		}
-
-		// load backgroundImage
-		$resultImage= $ilDB->queryF("SELECT image_file, image_file_sample FROM il_qpl_qst_paint_image WHERE question_fi = %s", array('integer'), array($question_id));
-		if($ilDB->numRows($resultImage) == 1)
-		{
-			$data = $ilDB->fetchAssoc($resultImage);
-			$this->image_filename = $data["image_file"];
-			$this->image_filename_bestsolution = $data["image_file_sample"];
-		}
-
-		$resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized, log_count, log_bkgr FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
-		if($ilDB->numRows($resultCheck) == 1)
-		{
-			$data = $ilDB->fetchAssoc($resultCheck);
-			$this->lineValue = $data["line"];
-			$this->colorValue = $data["color"];
-			$this->setRadioOption($data["radio_option"]);
-			$this->setCanvasWidth($data["width"]);
-			$this->setCanvasHeight($data["height"]);
-			$this->setResizedImageStatus($data["resized"]);
-			$this->setLogCount($data["log_count"]);
-			$this->setLogBkgr($data["log_bkgr"]);
-		}
-		
-		// load config
-		$config = $ilDB->query("SELECT enable_for_users_conf, log_count_conf, log_bkgr_conf FROM il_qpl_qst_paint_conf WHERE id = 0");
-		if($ilDB->numRows($config) == 1)
-		{
-		    $data = $ilDB->fetchAssoc($config);
-		    $this->enableForUsersConf = $data["enable_for_users_conf"];
-		    $this->logCountConf = $data["log_count_conf"];
-		    $this->logBkgrConf = $data["log_bkgr_conf"];
-		}
-		
-		try
-		{
-			$this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
-		}
-		catch(ilTestQuestionPoolException $e)
-		{
-		}
-
-		// loads additional stuff like suggested solutions
-		parent::loadFromDb($question_id);
-	}	
-
-	/**
-	* Saves a assPaintQuestion object to a database
-	*
-	* @access public
-	*/
-	function saveToDb($original_id = "")
-	{
-		global $ilDB, $ilLog;
-		$this->saveQuestionDataToDb($original_id);			
-		// save background image
+	    global $DIC;
+	    $ilDB = $DIC->database();
+	    
+	    // save the basic data (implemented in parent)
+	    // a new question is created if the id is -1
+	    // afterwards the new id is set
+	    if ($original_id == '') {
+	        $this->saveQuestionDataToDb();
+	    } else {
+	        $this->saveQuestionDataToDb($original_id);
+	    }
+	    
+	    // save background image
 		$affectedRows = $ilDB->manipulateF("DELETE FROM il_qpl_qst_paint_image WHERE question_fi = %s", 
 			array("integer"),
 			array($this->getId())
@@ -476,115 +446,189 @@ class assPaintQuestion extends assQuestion
 			
 		parent::saveToDb();
 	}
-
+	
 	/**
-	* Returns the maximum points, a learner can reach answering the question
-	* @access public
-	* @see $points
-	*/
-	function getMaximumPoints()
-	{		
-		return $this->points;
-	}
-
-/**
-* Duplicates an assPaintQuestion
-*
-* @access public
-*/
-	function duplicate($for_test = true, $title = "", $author = "", $owner = "", $testObjId = null)
+	 * Loads a question object from a database
+	 * This has to be done here (assQuestion does not load the basic data)!
+	 *
+	 * @param integer $question_id A unique key which defines the question in the database
+	 * @see assQuestion::loadFromDb()
+	 */
+	public function loadFromDb($question_id) : void
 	{
-		if ($this->id <= 0)
-		{
-			// The question has not been saved. It cannot be duplicated
-			return;
-		}
-		// duplicate the question in database
-		$this_id = $this->getId();
-		
-		if( (int)$testObjId > 0 )
-		{
-			$thisObjId = $this->getObjId();
-		}
-		
-		$clone = $this;
-		include_once ("./Modules/TestQuestionPool/classes/class.assQuestion.php");
-		$original_id = assQuestion::_getOriginalId($this->id);
-		$clone->id = -1;
-		
-		if( (int)$testObjId > 0 )
-		{
-			$clone->setObjId($testObjId);
-		}
-		
-		if ($title)
-		{
-			$clone->setTitle($title);
-		}
-		if ($author)
-		{
-			$clone->setAuthor($author);
-		}
-		if ($owner)
-		{
-			$clone->setOwner($owner);
-		}
-		if ($for_test)
-		{
-			$clone->saveToDb($original_id);
-		}
-		else
-		{
-			$clone->saveToDb();
-		}
+	    global $DIC;
+	    $ilDB = $DIC->database();
+	    
+	    // load the basic question data
+	    $result = $ilDB->query("SELECT qpl_questions.* FROM qpl_questions WHERE question_id = "
+	        . $ilDB->quote($question_id, 'integer'));
+	    if ($result->numRows() > 0) {
+	        $data = $ilDB->fetchAssoc($result);
+	        $this->setId($question_id);
+	        $this->setObjId($data['obj_fi']);
+	        $this->setOriginalId($data['original_id']);
+	        $this->setOwner($data['owner']);
+	        $this->setTitle((string) $data['title']);
+	        $this->setAuthor($data['author']);
+	        $this->setPoints($data['points']);
+	        $this->setComment((string) $data['description']);
+	        //$this->setSuggestedSolution($data["solution_hint"]);
+	        
+	        try {
+	            $this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
+	        } catch (ilTestQuestionPoolException $e) {
+	        }
+	        
+	        $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc((string) $data['question_text'], 1));
+	        
+	        try {
+	            $this->setLifecycle(ilAssQuestionLifecycle::getInstance($data['lifecycle']));
+	        } catch (ilTestQuestionPoolInvalidArgumentException $e) {
+	            $this->setLifecycle(ilAssQuestionLifecycle::getDraftInstance());
+	        }
+	        
+	        // load backgroundImage
+	        $resultImage= $ilDB->queryF("SELECT image_file, image_file_sample FROM il_qpl_qst_paint_image WHERE question_fi = %s", array('integer'), array($question_id));
+	        if($ilDB->numRows($resultImage) == 1)
+	        {
+	            $data = $ilDB->fetchAssoc($resultImage);
+	            $this->image_filename = $data["image_file"];
+	            $this->image_filename_bestsolution = $data["image_file_sample"];
+	        }
+	        
+	        $resultCheck= $ilDB->queryF("SELECT line, color, radio_option, width, height, resized, log_count, log_bkgr FROM il_qpl_qst_paint_check WHERE question_fi = %s", array('integer'), array($question_id));
+	        if($ilDB->numRows($resultCheck) == 1)
+	        {
+	            $data = $ilDB->fetchAssoc($resultCheck);
+	            $this->lineValue = $data["line"];
+	            $this->colorValue = $data["color"];
+	            $this->setRadioOption($data["radio_option"]);
+	            $this->setCanvasWidth($data["width"]);
+	            $this->setCanvasHeight($data["height"]);
+	            $this->setResizedImageStatus($data["resized"]);
+	            $this->setLogCount($data["log_count"]);
+	            $this->setLogBkgr($data["log_bkgr"]);
+	        }
+	        
+	        // load config
+	        $config = $ilDB->query("SELECT enable_for_users_conf, log_count_conf, log_bkgr_conf FROM il_qpl_qst_paint_conf WHERE id = 0");
+	        if($ilDB->numRows($config) == 1)
+	        {
+	            $data = $ilDB->fetchAssoc($config);
+	            $this->enableForUsersConf = $data["enable_for_users_conf"];
+	            $this->logCountConf = $data["log_count_conf"];
+	            $this->logBkgrConf = $data["log_bkgr_conf"];
+	        }
+	    }
 
-		// copy question page content
-		$clone->copyPageOfQuestion($this_id);
-		// copy XHTML media objects
-		$clone->copyXHTMLMediaObjectsOfQuestion($this_id);
-		// duplicate the image
-		$clone->duplicateImage($this_id, $thisObjId);
-		
-		$clone->onDuplicate($thisObjId, $this_id, $clone->getObjId(), $clone->getId());
-		
-		return $clone->id;
+	    // loads additional stuff like suggested solutions
+	    parent::loadFromDb($question_id);
 	}
 
 	/**
-	* Copies an assPaintQuestion object
-	*
-	* @access public
-	*/
+	 * Duplicates a question
+	 * This is used for copying a question to a test
+	 *
+	 * @access public
+	 */
+	function duplicate($for_test = true, $title = "", $author = "", $owner = "", $testObjId = null) : int
+	{
+	    if ($this->getId() <= 0)
+	    {
+	        // The question has not been saved. It cannot be duplicated
+	        return 0;
+	    }
+	    
+	    // make a real clone to keep the object unchanged
+	    $clone = clone $this;
+	    
+	    $original_id = assQuestion::_getOriginalId($this->getId());
+	    $clone->setId(-1);
+	    
+	    if( (int) $testObjId > 0 )
+	    {
+	        $clone->setObjId($testObjId);
+	    }
+	    
+	    if (!empty($title))
+	    {
+	        $clone->setTitle($title);
+	    }
+	    if (!empty($author))
+	    {
+	        $clone->setAuthor($author);
+	    }
+	    if (!empty($owner))
+	    {
+	        $clone->setOwner($owner);
+	    }
+	    
+	    if ($for_test)
+	    {
+	        $clone->saveToDb($original_id);
+	    }
+	    else
+	    {
+	        $clone->saveToDb();
+	    }
+	    
+	    // copy question page content
+	    $clone->copyPageOfQuestion($this->getId());
+	    // copy XHTML media objects
+	    $clone->copyXHTMLMediaObjectsOfQuestion($this->getId());
+	    
+		// duplicate the image
+	    $clone->duplicateImage($this->getId(), $this->getObjId());
+		
+		$clone->onDuplicate($this->getObjId(), $this->getId(), $clone->getObjId(), $clone->getId());
+		
+		return $clone->getId();
+	}
+
+	/**
+	 * Copies a question
+	 * This is used when a question is copied on a question pool
+	 *
+	 * @param integer	$target_questionpool_id
+	 * @param string	$title
+	 *
+	 * @return void|integer Id of the clone or nothing.
+	 */
 	function copyObject($target_questionpool_id, $title = "")
 	{
-		if ($this->id <= 0)
-		{
-			// The question has not been saved. It cannot be duplicated
-			return;
-		}
-		// duplicate the question in database
-		$clone = $this;
-		include_once ("./Modules/TestQuestionPool/classes/class.assQuestion.php");
-		$original_id = assQuestion::_getOriginalId($this->id);
-		$clone->id = -1;
-		$source_questionpool_id = $this->getObjId();
-		$clone->setObjId($target_questionpool_id);
-		if ($title)
-		{
-			$clone->setTitle($title);
-		}
-		$clone->saveToDb();
+	    if ($this->getId() <= 0)
+	    {
+	        // The question has not been saved. It cannot be duplicated
+	        return;
+	    }
+	    
+	    // make a real clone to keep the object unchanged
+	    $clone = clone $this;
+	    
+	    $original_id = assQuestion::_getOriginalId($this->getId());
+	    $source_questionpool_id = $this->getObjId();
+	    $clone->setId(-1);
+	    $clone->setObjId($target_questionpool_id);
+	    if (!empty($title))
+	    {
+	        $clone->setTitle($title);
+	    }
+	    
+	    // save the clone data
+	    $clone->saveToDb();
 
-		// copy question page content
-		$clone->copyPageOfQuestion($original_id);
-		// copy XHTML media objects
-		$clone->copyXHTMLMediaObjectsOfQuestion($original_id);
+	    // copy question page content
+	    $clone->copyPageOfQuestion($original_id);
+	    // copy XHTML media objects
+	    $clone->copyXHTMLMediaObjectsOfQuestion($original_id);
+	    
 		// duplicate the image
 		$clone->copyImage($original_id, $source_questionpool_id);
 		
+		// call the event handler for copy
 		$clone->onCopy($source_questionpool_id, $original_id, $clone->getObjId(), $clone->getId());
 		
-		return $clone->id;
+		return $clone->getId();
 	}
 
 	function duplicateImage($question_id, $objectId = null)
@@ -598,7 +642,7 @@ class assPaintQuestion extends assQuestion
 		}
 		
 		if (!file_exists($imagepath)) {
-			ilUtil::makeDirParents($imagepath);
+		    ilFileUtils::makeDirParents($imagepath);
 		}
 		$filename = $this->getImageFilename();
 		
@@ -631,7 +675,7 @@ class assPaintQuestion extends assQuestion
 		$imagepath_original = str_replace("/$this->obj_id/", "/$source_questionpool/", $imagepath_original);
 		if (!file_exists($imagepath)) 
 		{
-			ilUtil::makeDirParents($imagepath);
+		    ilFileUtils::makeDirParents($imagepath);
 		}
 		$filename = $this->getImageFilename();
 		
@@ -659,10 +703,10 @@ class assPaintQuestion extends assQuestion
 	}
 	
 	/**
-	 * Copies a question
-	 * This is used when a question is copied from a test to a question pool
-	 *
-	 * @access public
+	 * Create a new original question in a question pool for a test question
+	 * @param int $targetParentId			id of the target question pool
+	 * @param string $targetQuestionTitle
+	 * @return int|void
 	 */
 	public function createNewOriginalFromThisDuplicate($targetParentId, $targetQuestionTitle = "")
 	{
@@ -671,21 +715,19 @@ class assPaintQuestion extends assQuestion
 			// The question has not been saved. It cannot be duplicated
 			return;
 		}
-		
-		include_once ("./Modules/TestQuestionPool/classes/class.assQuestion.php");
-		
+				
 		$sourceQuestionId = $this->id;
 		$sourceParentId = $this->getObjId();
 		
-		// duplicate the question in database
-		$clone = $this;
-		$clone->id = -1;
+		// make a real clone to keep the object unchanged
+		$clone = clone $this;
+		$clone->setId(-1);
 		
 		$clone->setObjId($targetParentId);
 		
-		if ($targetQuestionTitle)
+		if (!empty($targetQuestionTitle))
 		{
-			$clone->setTitle($targetQuestionTitle);
+		    $clone->setTitle($targetQuestionTitle);
 		}
 		
 		$clone->saveToDb();
@@ -693,82 +735,121 @@ class assPaintQuestion extends assQuestion
 		$clone->copyPageOfQuestion($sourceQuestionId);
 		// copy XHTML media objects
 		$clone->copyXHTMLMediaObjectsOfQuestion($sourceQuestionId);
+		
 		// duplicate the image
 		$clone->copyImage($sourceQuestionId, $sourceParentId);
 		
 		$clone->onCopy($sourceParentId, $sourceQuestionId, $clone->getObjId(), $clone->getId());
 		
-		return $clone->id;
+		return $clone->getId();
 	}
 	
 	/**
-	 * Get a submitted solution array from $_POST
+	 * Get the submitted user input as a serializable value
 	 *
-	 * In general this may return any type that can be stored in a php session
-	 * The return value is used by:
-	 * 		savePreviewData()
-	 * 		saveWorkingData()
-	 * 		calculateReachedPointsForSolution()
-	 *
-	 * @return	array	('value1' => string, 'value2' => string, 'points' => float)
+	 * @return mixed user input (scalar, object or array)
 	 */
 	protected function getSolutionSubmit()
 	{
-		return array(
-				'value1' => ilUtil::stripSlashes($_POST['answerJSON'."_qst_" . $this->getId()], false),				
-				'value2' => ilUtil::stripSlashes($_POST['answerImage'."_qst_" . $this->getId()])
-		);
+	    $value1 = isset($_POST['answerJSON'."_qst_" . $this->getId()]) ? trim(ilUtil::stripSlashes($_POST['answerJSON'."_qst_" . $this->getId()], false)) : null;
+	    $value2 = isset($_POST['answerImage'."_qst_" . $this->getId()]) ? trim(ilUtil::stripSlashes($_POST['answerImage'."_qst_" . $this->getId()])) : null;
+	    
+	    return array(
+	        'value1' => empty($value1)? null : (string) $value1,
+	        'value2' => empty($value2)? null : (string) $value2
+	    );
 	}
-
+	
+	/**
+	 * Get a stored solution for a user and test pass
+	 * This is a wrapper to provide the same structure as getSolutionSubmit()
+	 *
+	 * @param int 	$active_id		active_id of hte user
+	 * @param int	$pass			number of the test pass
+	 * @param bool	$authorized		get the authorized solution
+	 *
+	 * @return	array	('value1' => string|null, 'value2' => string|null, 'value3' => string|null, 'value4' => string|null)
+	 */
+	public function getSolutionStored($active_id, $pass, $authorized = null)
+	{
+	    // This provides an array with records from tst_solution
+	    // The example question should only store one record per answer
+	    // Other question types may use multiple records with value1/value2 in a key/value style
+	    if (isset($authorized))
+	    {
+	        // this provides either the authorized or intermediate solution
+	        $solutions = $this->getSolutionValues($active_id, $pass, $authorized);
+	    }
+	    else
+	    {
+	        // this provides the solution preferring the intermediate
+	        // or the solution from the previous pass
+	        $solutions = $this->getTestOutputSolutions($active_id, $pass);
+	    }
+	    
+	    
+	    if (empty($solutions))
+	    {
+	        // no solution stored yet
+	        $value1 = null;
+	        $value2 = null;
+	    }
+	    else
+	    {
+	        // If the process locker isn't activated in the Test and Assessment administration
+	        // then we may have multiple records due to race conditions
+	        // In this case the last saved record wins
+	        $solutions = end($solutions);
+	        
+	        $value1 = $solutions['value1'];
+	        $value2 = $solutions['value2'];
+	        
+	    }
+	    
+	    return array(
+	        'value1' => empty($value1)? null : (string) $value1,
+	        'value2' => empty($value2)? null : (string) $value2
+	    );
+	}
+	
+	/**
+	 * Calculate the reached points for a submitted user input
+	 *
+	 * @return  float	reached points
+	 */
+	public function calculateReachedPointsforSolution($solution)
+	{
+	    // paint must be graded manually
+	    return 0;
+	}
+	
 	/**
 	 * Returns the points, a learner has reached answering the question
-	 * The points are calculated from the given answers including checks
-	 * for all special scoring options in the test container.
+	 * The points are calculated from the given answers.
 	 *
-	 * @param integer $user_id The database ID of the learner
-	 * @param integer $test_id The database Id of the test containing the question
+	 * @param integer $active 	The Id of the active learner
+	 * @param integer $pass 	The Id of the test pass
 	 * @param boolean $returndetails (deprecated !!)
+	 * @return integer/array $points/$details (array $details is deprecated !!)
 	 * @access public
+	 * @see  assQuestion::calculateReachedPoints()
 	 */
 	function calculateReachedPoints($active_id, $pass = NULL, $authorizedSolution = true, $returndetails = false)
 	{
+	    if( $returndetails )
+	    {
+	        throw new ilTestException('return details not implemented for '.__METHOD__);
+	    }
+	    
 		global $ilDB;
 		
 		if (is_null($pass))
 		{
 			$pass = $this->getSolutionMaxPass($active_id);
 		}
-		/*
-		$result = $ilDB->queryF("SELECT * FROM tst_solutions WHERE active_fi = %s AND question_fi = %s AND pass = %s",
-			array(
-				"integer", 
-				"integer",
-				"integer"
-			),
-			array(
-				$active_id,
-				$this->getId(),
-				$pass
-			)
-		);
-		*/
-		$points = 0; // manuelle korrektur notwendig		
-		/*
-		$data = $ilDB->fetchAssoc($result);
-		$value1 = $data['value1'];
-		$value2 = $data['value2'];		
-		*/
-		return $points;
-	}
 
-	/**
-	 * Calculate the reached points for a submitted user input
-	 *
-	 * @param mixed user input (scalar, object or array)
-	 */
-	public function calculateReachedPointsforSolution($solution)
-	{
-		return 0;
+		$solution = $this->getSolutionStored($active_id, $pass, $authorizedSolution);
+		return $this->calculateReachedPointsForSolution($solution);
 	}
 	
     /**
@@ -783,13 +864,12 @@ class assPaintQuestion extends assQuestion
 	/**
 	 * Saves the learners input of the question to the database
 	 *
-	 * @param integer $active_id 	Active id of the user
-	 * @param integer $pass 		Test pass
-	 * @param boolean $authorized	The solution is authorized
-	 *
-	 * @return boolean $status
+	 * @param 	integer $test_id The database id of the test containing this question
+	 * @return 	boolean Indicates the save status (true if saved successful, false otherwise)
+	 * @access 	public
+	 * @see 	assQuestion::saveWorkingData()
 	 */
-	function saveWorkingData($active_id, $pass = NULL, $authorized = true)
+	function saveWorkingData($active_id, $pass = NULL, $authorized = true) : bool
 	{
 		global $ilDB;
 		global $ilUser;
@@ -823,7 +903,7 @@ class assPaintQuestion extends assQuestion
 				$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask_" . $pass . ".png";
 				
 				if (!@file_exists($this->getFileUploadPath($test_id, $active_id)))
-					ilUtil::makeDirParents($this->getFileUploadPath($test_id, $active_id));
+				    ilFileUtils::makeDirParents($this->getFileUploadPath($test_id, $active_id));
 					
 					// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
 					// Grab all files from the desired folder
@@ -975,7 +1055,6 @@ class assPaintQuestion extends assQuestion
 	/**
 	 * Reworks the allready saved working data if neccessary
 	 *
-	 * @abstract
 	 * @access protected
 	 * @param integer $active_id
 	 * @param integer $pass
@@ -983,30 +1062,7 @@ class assPaintQuestion extends assQuestion
 	 */
 	protected function reworkWorkingData($active_id, $pass, $obligationsAnswered, $authorized)
 	{
-		// nothing to rework!		
-	}
-
-	/**
-	* Returns the question type of the question
-	*
-	* @return integer The question type of the question
-	* @access public
-	*/
-	function getQuestionType()
-	{
-		return "assPaintQuestion";
-	}
-	
-	/**
-	* Returns the name of the additional question data table in the database
-	*
-	* @return string The additional table name
-	* @access public
-	*/
-	function getAdditionalTableName()
-	{
-		return array('il_qpl_qst_paint_check',
-				'il_qpl_qst_paint_image');
+	    // normally nothing needs to be reworked
 	}
 	
 	/**
@@ -1019,31 +1075,15 @@ class assPaintQuestion extends assQuestion
 	{
 		return "";
 	}
-
-	/**
-	* Collects all text in the question which could contain media objects
-	* which were created with the Rich Text Editor
-	*/
-	function getRTETextWithMediaObjects()
-	{
-		$text = parent::getRTETextWithMediaObjects();
-		return $text;
-	}
 	
 	/**
-	* Creates an Excel worksheet for the detailed cumulated results of this question
-	*
-	* @param object $worksheet Reference to the parent excel worksheet
-	* @param object $startrow Startrow of the output in the excel worksheet
-	* @param object $active_id Active id of the participant
-	* @param object $pass Test pass
-	* @param object $format_title Excel title format
-	* @param object $format_bold Excel bold format
-	* @param array $eval_data Cumulated evaluation data
-	* @access public
-	*/
-	public function setExportDetailsXLS($worksheet, $startrow, $active_id, $pass)
-	{	
+	 * Creates an Excel worksheet for the detailed cumulated results of this question
+	 *
+	 * @access public
+	 * @see assQuestion::setExportDetailsXLS()
+	 */
+	public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
+	{
 		
 		parent::setExportDetailsXLS($worksheet, $startrow, $active_id, $pass);
 		
@@ -1061,40 +1101,6 @@ class assPaintQuestion extends assQuestion
 		*/
 		
 		return $startrow + 1;
-	}	
-		
-	/**
-	* Creates a question from a QTI file
-	*
-	* Receives parameters from a QTI parser and creates a valid ILIAS question object
-	*
-	* @param object $item The QTI item object
-	* @param integer $questionpool_id The id of the parent questionpool
-	* @param integer $tst_id The id of the parent test if the question is part of a test
-	* @param object $tst_object A reference to the parent test object
-	* @param integer $question_counter A reference to a question counter to count the questions of an imported question pool
-	* @param array $import_mapping An array containing references to included ILIAS objects
-	* @access public
-	*/
-	function fromXML(&$item, &$questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping, array $solutionhints = [])
-	{
-		$this->getPlugin()->includeClass("import/qti12/class.assPaintQuestionImport.php");
-		$import = new assPaintQuestionImport($this);
-		$import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping, $solutionhints);
-	}
-	
-	/**
-	* Returns a QTI xml representation of the question and sets the internal
-	* domxml variable with the DOM XML representation of the QTI xml representation
-	*
-	* @return string The QTI xml representation of the question
-	* @access public
-	*/
-	function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false)
-	{
-		$this->getPlugin()->includeClass("export/qti12/class.assPaintQuestionExport.php");
-		$export = new assPaintQuestionExport($this);
-		return $export->toXML($a_include_header, $a_include_binary, $a_shuffle, $test_output, $force_image_references);
 	}
 }
 ?>

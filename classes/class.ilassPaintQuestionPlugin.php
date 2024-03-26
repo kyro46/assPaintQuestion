@@ -11,7 +11,7 @@
 	*/
 	class ilassPaintQuestionPlugin extends ilQuestionsPlugin
 	{
-		final function getPluginName()
+	    final function getPluginName() : string
 		{
 			return "assPaintQuestion";
 		}
@@ -21,7 +21,7 @@
 			return "assPaintQuestion";
 		}
 		
-		final function getQuestionTypeTranslation()
+		final function getQuestionTypeTranslation() : string
 		{
 			return $this->txt('questionType');
 		}

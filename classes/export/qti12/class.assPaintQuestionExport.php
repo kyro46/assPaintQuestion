@@ -17,8 +17,8 @@ class assPaintQuestionExport extends assQuestionExport
 	* @return string The QTI xml representation of the question
 	* @access public
 	*/
-	function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false)
-	{
+    function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false) : string
+    {
 		global $ilias;
 		
 		include_once("./Services/Xml/classes/class.ilXmlWriter.php");
@@ -34,10 +34,12 @@ class assPaintQuestionExport extends assQuestionExport
 		$a_xml_writer->xmlStartTag("item", $attrs);
 		// add question description
 		$a_xml_writer->xmlElement("qticomment", NULL, $this->object->getComment());
+		
 		// add estimated working time
-		$workingtime = $this->object->getEstimatedWorkingTime();
-		$duration = sprintf("P0Y0M0DT%dH%dM%dS", $workingtime["h"], $workingtime["m"], $workingtime["s"]);
-		$a_xml_writer->xmlElement("duration", NULL, $duration);
+		// $workingtime = $this->object->getEstimatedWorkingTime();
+		// $duration = sprintf("P0Y0M0DT%dH%dM%dS", $workingtime["h"], $workingtime["m"], $workingtime["s"]);
+		// $a_xml_writer->xmlElement("duration", NULL, $duration);
+		
 		// add ILIAS specific metadata
 		$a_xml_writer->xmlStartTag("itemmetadata");
 		$a_xml_writer->xmlStartTag("qtimetadata");
@@ -102,7 +104,7 @@ class assPaintQuestionExport extends assQuestionExport
 			{
 				global $ilErr;
 				$ilErr->raiseError($this->object->lng->txt("error_open_image_file"), $ilErr->MESSAGE);
-				return;
+				return 0;
 			}
 			$imagefile = fread($fh, filesize($imagepath));
 			fclose($fh);
@@ -126,7 +128,7 @@ class assPaintQuestionExport extends assQuestionExport
 			{
 				global $ilErr;
 				$ilErr->raiseError($this->object->lng->txt("error_open_image_file"), $ilErr->MESSAGE);
-				return;
+				return 0;
 			}
 			$imagefile = fread($fh, filesize($resizedimagepath));
 			fclose($fh);
@@ -160,7 +162,7 @@ class assPaintQuestionExport extends assQuestionExport
 		    {
 		        global $ilErr;
 		        $ilErr->raiseError($this->object->lng->txt("error_open_image_file"), $ilErr->MESSAGE);
-		        return;
+		        return 0;
 		    }
 		    $imagefile = fread($fh, filesize($imagepath));
 		    fclose($fh);
