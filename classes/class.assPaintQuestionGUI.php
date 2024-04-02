@@ -451,7 +451,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		if (($active_id > 0) && (!$show_correct_solution))
 		{
 			// get the solutions of a user
-			$user_solution =& $this->object->getSolutionValues($active_id, $pass);
+		    $user_solution = $this->object->getSolutionStored($active_id, $pass, true);
 			if (!is_array($user_solution)) 
 			{
 				$user_solution = array();
@@ -540,9 +540,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 		foreach ($user_solution as $solution)
 		{				
 				
-				if ($user_solution[0]["value2"])
+				if ($user_solution["value2"])
 				{
-					$content = file_get_contents ( $user_solution[0]["value2"]);
+					$content = file_get_contents ($user_solution["value2"]);
 
 					//merge background and drawing if backgroundimage available
 					if( $this->object->getImageFilename() )
