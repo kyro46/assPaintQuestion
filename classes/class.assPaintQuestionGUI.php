@@ -494,7 +494,11 @@ class assPaintQuestionGUI extends assQuestionGUI
 					$background = imagecreatefromjpeg ($pathToImage);
 					break;
 				case 3:
+					set_error_handler(function ($errno, $errstr) {
+						ilLoggerFactory::getLogger('assPaintQuestion')->warning("Error $errno in Paint Question: $errstr");
+					}, E_WARNING);
 					$backgroundInput = imagecreatefrompng ($pathToImage);
+					restore_error_handler();
 					// Steps to convert transparency to white (instead of default black)
 					$backgroundWidth = imagesx($backgroundInput);
 					$backgroundHeight = imagesy($backgroundInput);
