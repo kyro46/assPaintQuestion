@@ -1,7 +1,7 @@
 # assPaintQuestion
-Paint-Questiontypeplugin for ILIAS 8
+Paint-Questiontypeplugin for ILIAS 9
 
-For ILIAS 4.3 to 7 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases), for ILIAS 7 also see the corresponding [**Branch**](https://github.com/kyro46/assPaintQuestion/tree/ilias_7)
+For ILIAS 4.3 to 8 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases) and the corresponding branches.
 
 
 ### Questiontype that allows drawing on a backgroundimage or a plain canvas ###
@@ -16,14 +16,21 @@ This plugin will add a questiontype, that allows:
 
 ### Installation ###
 
-PhantomJS recommended for PDF generation since ILIAS 5.3+
+Install the plugin
 
-* Customizing/global/plugins/Modules/TestQuestionPool/Questions
 ```bash
 mkdir -p Customizing/global/plugins/Modules/TestQuestionPool/Questions  
 cd Customizing/global/plugins/Modules/TestQuestionPool/Questions
 git clone https://github.com/kyro46/assPaintQuestion.git
-```  
+```
+
+Then follow the usual steps to update ILIAS from the ILIAS-Root-Dir:
+
+```bash
+composer install --no-dev
+php setup/setup.php update
+```
+
 and activate it in the ILIAS-Admin-GUI. Manual correction has to be enabled for this question type.
 
 ### Known Problems ###
@@ -32,5 +39,5 @@ and activate it in the ILIAS-Admin-GUI. Manual correction has to be enabled for 
 
 ### Credits ###
 * Development of plugin-draft for ILIAS 4.4 by Yves Annanias, University Halle, 2014
-* Further development by Christoph Jobst, University Halle/Leipzig, 2014/2015/2016/2017
-* The plugin (1.1.10+) utilises [literallycanvas](https://github.com/literallycanvas/literallycanvas) (BSD-2-Clause) by Steve Johnson
+* Further development by Christoph Jobst, University Halle/Leipzig, 2014+
+* The plugin (since 1.1.10+) utilises [literallycanvas](https://github.com/literallycanvas/literallycanvas) (BSD-2-Clause) by Steve Johnson

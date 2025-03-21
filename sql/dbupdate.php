@@ -169,3 +169,10 @@
 	//Default for id column in config table
 	$ilDB->manipulate('ALTER TABLE il_qpl_qst_paint_conf ALTER id SET DEFAULT 0;');
 ?>
+<#10>
+<?php
+if($ilDB->tableColumnExists('qpl_qst_type', 'plugin_name'))
+{
+    $ilDB->manipulate("UPDATE qpl_qst_type set plugin_name = type_tag WHERE type_tag ='assPaintQuestion'");
+}
+?>

@@ -250,7 +250,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	    global $DIC, $tpl;			
 		$plugin       = $this->object->getPlugin();		
 		$template     = $plugin->getTemplate("output_dev.html");						
-		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($this->object->getQuestion(), TRUE));
+		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($this->object->getQuestion(), TRUE));
 		if (!$this->object->getLineValue()) {
 			$template->setVariable("DISPLAY_LINE", "8");
 		} else {
@@ -413,7 +413,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		$template->setVariable("RESUME", ilLegacyFormElementsUtil::prepareFormOutput($base64));	
 		
-		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
+		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($output, TRUE));	
 		$questionoutput = $template->get();
 		$pageoutput = $this->outQuestionPage("", $is_question_postponed, $active_id, $questionoutput);
 		return $pageoutput;		
@@ -583,7 +583,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$template->setVariable("SOLUTION", ilLegacyFormElementsUtil::prepareFormOutput($base64));		
 		}		
 
-		$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($output, TRUE));
+		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($output, TRUE));
 		
 		if ($result_output)
 		{
@@ -599,7 +599,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$questionoutput = $template->get();
 
 		$feedback = ($show_feedback) ? $this->getGenericFeedbackOutput($active_id, $pass) : "";
-		if (strlen($feedback)) $solutiontemplate->setVariable("FEEDBACK", $this->object->prepareTextareaOutput( $feedback, true ));
+		if (strlen($feedback)) $solutiontemplate->setVariable("FEEDBACK", self::prepareTextareaOutput( $feedback, true ));
 		
 		$solutiontemplate->setVariable("SOLUTION_OUTPUT", $questionoutput);
 
@@ -625,7 +625,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	{
 	    // By default no answer specific feedback is defined
 	    $output = '';
-	    return $this->object->prepareTextareaOutput($output, TRUE);
+	    return self::prepareTextareaOutput($output, TRUE);
 	}
 	
 	/**
