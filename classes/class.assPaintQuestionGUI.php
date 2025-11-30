@@ -4,14 +4,13 @@
  * The assPaintQuestionGUI class encapsulates the GUI representation
  * for Question-Type-Plugin.
  *
- * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
- * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
+ * @author	Christoph Jobst <iliasplugins.christoph.jobst@outlook.de>
  * @ingroup ModulesTestQuestionPool
  * 
  * @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilctrl_calls assPaintQuestionGUI: ilFormPropertyDispatchGUI
  */
-class assPaintQuestionGUI extends assQuestionGUI
+class assPaintQuestionGUI extends assQuestionGUI implements ilGuiQuestionScoringAdjustable
 {	 
     /**
     * @const	string	URL base path for including special javascript and css files
@@ -28,6 +27,16 @@ class assPaintQuestionGUI extends assQuestionGUI
 
 	public assQuestion $object;
 	
+	public function getPlugin(): ilPlugin
+	{
+	    return $this->plugin;
+	}
+	
+	public function setPlugin(ilPlugin $plugin): void
+	{
+	    $this->plugin = $plugin;
+	}
+	
 	/**
 	 * Constructor
 	 *
@@ -36,13 +45,37 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 */
 	public function __construct($id = -1)
 	{	 
-	    global $DIC;
+	    global $tpl;
 	    
 		parent::__construct();
 		
-		/** @var ilComponentFactory $component_factory */
-		$component_factory = $DIC["component.factory"];
-		$this->plugin = $component_factory->getPlugin('assPaintQuestion');
+		// init the plugin object
+		try {
+		    global $DIC;
+		    
+		    /** @var ilComponentRepository $component_repository */
+		    $component_repository = $DIC["component.repository"];
+		    
+		    $info = null;
+		    $plugin_name = 'assPaintQuestion';
+		    $info = $component_repository->getPluginByName($plugin_name);
+		    
+		    /** @var ilComponentFactory $component_factory */
+		    $component_factory = $DIC["component.factory"];
+		    
+		    /** @var ilQuestionsPlugin $plugin_obj */
+		    $plugin_obj = $component_factory->getPlugin($info->getId());
+		    
+		    if (!is_null($info) && $info->isActive()) {
+		        $this->setPlugin($plugin_obj);
+		    } else {
+		        throw new ilPluginException($plugin_name . ' plugin is not active');
+		    }
+		} catch (ilPluginException $e) {
+		    global $tpl;
+		    $tpl->setOnScreenMessage('failure', $e->getMessage(), true);
+		}
+
 		$this->object = new assPaintQuestion();
 		if ($id >= 0)
 		{
@@ -54,110 +87,34 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * Creates an output of the edit form for the question
 	 *
 	 * @param bool $checkonly
+	 * @param bool $is_save_cmd
 	 * @return bool
 	 */
-	public function editQuestion($checkonly = FALSE)
+	public function editQuestion(
+	    bool $checkonly = false,
+	    ?bool $is_save_cmd = null
+	    ): bool 
 	{
 		global $ilDB;					
 
-		$save = $this->isSaveCommand();
+		$save = $is_save_cmd ?? $this->isSaveCommand();
 		$plugin = $this->object->getPlugin();		
 		
 		$this->getQuestionTemplate();
-		include_once("./Services/Form/classes/class.ilPropertyFormGUI.php");
 		$form = new ilPropertyFormGUI();
+		$this->editForm = $form;
+		
 		$form->setFormAction($this->ctrl->getFormAction($this));
-		$form->setTitle($this->outQuestionType());
+		$form->setTitle($this->plugin->txt("edit_assPaintQuestion"));
 		$form->setMultipart(FALSE);
 		$form->setTableWidth("100%");
 		$form->setId("assPaintQuestion");
+		
 		// Baseinput: title, author, description, question, working time (assessment mode)		
 		$this->addBasicQuestionFormProperties($form);
 		
-		//Start Question specific
-		// points
-		$points = new ilNumberInputGUI($plugin->txt("points"), "points");
-		$points->setSize(3);
-		$points->setMinValue(1);
-		$points->allowDecimals(1);
-		$points->setRequired(true);
-		$points->setValue($this->object->getPoints());
-		$form->addItem($points);
-		
-		// background-image		
-		$image = new ilImageFileInputGUI($plugin->txt("image"), 'imagefile');
-		$image->setSuffixes(array("jpg", "jpeg", "png"));
-		
-		if ($this->object->getImageFilename() != "")
-		{
-			$image->setImage($this->object->getImagePathWeb().$this->object->getImageFilename());
-		}
-		$form->addItem($image);
-		
-		//cancassize
-		$canvasArea = new ilRadioGroupInputGUI($plugin->txt("canvasArea"), "canvasArea");
-		$canvasArea->addOption(new ilRadioOption($plugin->txt("useImageSize"), 'radioImageSize', ''));
-		$canvasArea->setInfo($plugin->txt("canvas_size_hint"));
-		$ownSize = new ilRadioOption($plugin->txt("useOwnSize"), 'radioOwnSize', '');
-		$canvasArea->addOption($ownSize);
-		$canvasArea->setValue($this->object->getRadioOption());
-		
-		$sizeWidth = new ilNumberInputGUI($plugin->txt("width"),"sizeWidth");
-		$sizeWidth->setValue($this->object->getCanvasWidth());		
-		$sizeWidth->setSize(6);
-		$sizeWidth->setMinValue(450);
-		
-		$sizeHeight = new ilNumberInputGUI($plugin->txt("height"),"sizeHeight");
-		$sizeHeight->setValue($this->object->getCanvasHeight());
-		$sizeHeight->setSize(6);
-		$sizeHeight->setMinValue(400);
-		
-		$ownSize->addSubItem($sizeWidth);
-		$ownSize->addSubItem($sizeHeight);
-		$form->addItem($canvasArea);
-		
-		// brushsize
-		$line = new ilCheckboxInputGUI($plugin->txt("line"), 'lineValue');
-		if ($this->object->getLineValue())
-			$line->setChecked(true);
-		$form->addItem($line);
-		
-		// colourselection
-		/*Remove this option with version 1.1.10
-		$color = new ilCheckboxInputGUI($plugin->txt("color"), 'colorValue');
-		if ($this->object->getColorValue())
-			$color->setChecked(true);
-		$form->addItem($color);	
-		*/
-		
-		// sample solution
-		$imageBestsolution = new ilImageFileInputGUI($plugin->txt("image_bestsolution"), 'imagefile_bestsolution');
-		$imageBestsolution->setSuffixes(array("jpg", "jpeg", "png"));
-
-		if ($this->object->getImageFilenameBestsolution() != "")
-		{
-		    $imageBestsolution->setImage($this->object->getImagePathWeb().$this->object->getImageFilenameBestsolution());
-		}
-		$form->addItem($imageBestsolution);
-		
-		if ($this->object->getEnableForUsersConf()) {
-			//LogCount
-			$logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCountValue");
-			$logCountOption->setInfo($plugin->txt("logCountOption_hint"));
-			$logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
-			$logCountOption->setValue($this->object->getLogCount());
-			$form->addItem($logCountOption);
-	
-			//LogBkgr
-			$logBkgrOption = new ilCheckboxInputGUI($plugin->txt("logBkgrOption"), 'logBkgrValue');
-			$logBkgrOption->setInfo($plugin->txt("logBkgrOption_hint"));
-			if ($this->object->getLogBkgr())
-				$logBkgrOption->setChecked(true);
-			$form->addItem($logBkgrOption);
-		}
-		
-		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
-		//End Question specific
+		$this->populateQuestionSpecificFormPart($form);
+		$this->populateAnswerSpecificFormPart($form);
 		
 		$this->populateTaxonomyFormSection($form);
 		$this->addQuestionFormCommandButtons($form);
@@ -192,18 +149,30 @@ class assPaintQuestionGUI extends assQuestionGUI
 	    {
 	        $this->writeQuestionGenericPostData();
 	        $this->object->setPoints( str_replace( ",", ".", $_POST["points"] ));
-	        
+	              
 	        //Background
 	        if ($_POST['imagefile_delete'])
 	        {
 	            $this->object->deleteImage();
 	        } else
 	        {
-	            if (strlen($_FILES['imagefile']['tmp_name']))
+	            $file_org_name = $_FILES['imagefile']['name'] ?? '';
+	            $file_temp_name = $_FILES['imagefile']['tmp_name'] ?? '';
+	            
+	            if ($file_temp_name !== '')
 	            {
 	                $this->object->deleteImage(); //Something (probably new) was uploaded - delete the old image
-	                $this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);
-	            }
+	                
+                    // check suffix
+                    $file_name_parts = explode('.', $file_org_name);
+                    $suffix = strtolower(array_pop($file_name_parts));
+                    if (in_array($suffix, ['jpg', 'jpeg', 'png'])) {
+                        // upload image
+                        $filename = $this->object->buildHashedImageFilename($file_org_name);
+                        if ($this->object->setImageFilename($filename, $file_temp_name) == 0) {
+                        }
+                    }
+                }
 	        }
 	        $this->object->setRadioOption($_POST["canvasArea"]);
 	        $this->object->setCanvasWidth($_POST["sizeWidth"]);
@@ -217,13 +186,25 @@ class assPaintQuestionGUI extends assQuestionGUI
 	            $this->object->deleteImageBestsolution();
 	        } else
 	        {
-	            if (strlen($_FILES['imagefile_bestsolution']['tmp_name']))
+	            $file_org_name = $_FILES['imagefile_bestsolution']['name'] ?? '';
+	            $file_temp_name = $_FILES['imagefile_bestsolution']['tmp_name'] ?? '';
+	            
+	            if ($file_temp_name !== '')
 	            {
 	                $this->object->deleteImageBestsolution(); //Something (probably new) was uploaded - delete the old image
-	                $this->object->setImageFilenameBestsolution($_FILES['imagefile_bestsolution']['name'], $_FILES['imagefile_bestsolution']['tmp_name']);
+	                
+	                // check suffix
+	                $file_name_parts = explode('.', $file_org_name);
+	                $suffix = strtolower(array_pop($file_name_parts));
+	                if (in_array($suffix, ['jpg', 'jpeg', 'png'])) {
+	                    // upload image
+	                    $filename = $this->object->buildHashedImageFilename($file_org_name);
+	                    if ($this->object->setImageFilenameBestsolution($filename, $file_temp_name) == 0) {
+	                    }
+	                }
 	            }
 	        }
-	        
+
 	        if ($this->object->getEnableForUsersConf()) {
 	           $this->object->setLogCount($_POST['logCountValue']);
 	           $this->object->setLogBkgr($_POST['logBkgrValue']);
@@ -243,13 +224,15 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * Get the output for question preview
 	 * (called from ilObjQuestionPoolGUI)
 	 * 
-	 * @param boolean	show only the question instead of embedding page (true/false)
+	 * @param boolean	$show_question_only      show only the question instead of embedding page (true/false)
+	 * @param boolean	$show_inline_feedback
 	 */
-	function getPreview($show_question_only = false, $showInlineFeedback = false)
+	public function getPreview(bool $show_question_only = false, bool $show_inline_feedback = false): string
 	{	
 	    global $DIC, $tpl;			
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output_dev.html");						
+		$template = new ilTemplate("output_dev.html", true, true, 'public/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion');
+		
 		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($this->object->getQuestion(), TRUE));
 		if (!$this->object->getLineValue()) {
 			$template->setVariable("DISPLAY_LINE", "8");
@@ -302,9 +285,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 			}
 		}
 
-		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/_assets/literallycanvas.css'.self::URL_SUFFIX);
-		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/react-0.14.3.js');
-		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/literallycanvas.js');
+		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/default/_assets/literallycanvas.css'.self::URL_SUFFIX);
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/default/_js_libs/react-0.14.3.js');
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/default/_js_libs/literallycanvas.js');
 		
 		$template->setVariable("RESUME", "");
 		
@@ -318,19 +301,26 @@ class assPaintQuestionGUI extends assQuestionGUI
 		return $questionoutput;
 	}
 
-	/**
-	 * Get the HTML output of the question for a test
-	 * (this function could be private)
-	 *
-	 * @param integer $active_id						The active user id
-	 * @param integer $pass								The test pass
-	 * @param boolean $is_postponed						Question is postponed
-	 * @param boolean $use_post_solutions				Use post solutions
-	 * @param boolean $show_specific_inline_feedback	Show a specific inline feedback
-	 * @return string
-	 */
-	public function getTestOutput($active_id, $pass = NULL, $is_question_postponed = FALSE, $user_post_solutions = FALSE, $show_specific_inline_feedback = FALSE)	{
-		global $DIC; $tpl;
+    /**
+    * Get the HTML output of the question for a test
+    * (this function could be private)
+    *
+    * @param integer $active_id			           The active user id
+    * @param integer $pass					           The test pass
+    * @param boolean $is_question_postponed           Question is postponed
+    * @param boolean $user_post_solutions	           Use post solutions
+    * @param boolean $show_specific_inline_feedback   Show a feedback
+    * @return string
+    */
+    public function getTestOutput(
+        int $active_id,
+        int $pass,
+        bool $is_question_postponed = false,
+        array|bool $user_post_solutions = false,
+        bool $show_specific_inline_feedback = false
+        ): string 
+    {
+	    global $DIC; $tpl;
 		// get the solution of the user for the active pass or from the last pass if allowed
 		$user_solution = array();
 		if ($active_id)
@@ -343,7 +333,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 		
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output_dev.html");		
+		$template = new ilTemplate("output_dev.html", true, true, 'public/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion');
 		$output 	  = $this->object->getQuestion();
 		
 		if (!$this->object->getLineValue()) {
@@ -395,9 +385,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 			}
 		}
 		
-		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/_assets/literallycanvas.css'.self::URL_SUFFIX);
-		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/react-0.14.3.js');
-		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/literallycanvas.js');
+		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/default/_assets/literallycanvas.css'.self::URL_SUFFIX);
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/default/_js_libs/react-0.14.3.js');
+		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/default/_js_libs/literallycanvas.js');
 		
 		// letzte gespeicherte Eingabe anzeigen
 		$base64 = "";
@@ -409,8 +399,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}							
 		
 		if ($user_solution["value2"] != 'path'){
-			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",$user_solution["value1"]));
+		    $template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",(string)$user_solution["value1"]));
 		}
+		
 		$template->setVariable("RESUME", ilLegacyFormElementsUtil::prepareFormOutput($base64));	
 		
 		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($output, TRUE));	
@@ -430,20 +421,21 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * @param boolean $show_correct_solution Show the correct solution instead of the user solution
 	 * @param boolean $show_manual_scoring   Show specific information for the manual scoring output
 	 * @param bool    $show_question_text
-	 
+	 * @param bool    $show_inline_feedback
 	 * @return string solution output of the question as HTML code
 	 */
 	function getSolutionOutput(
-	    $active_id,
-	    $pass = NULL,
-	    $graphicalOutput = FALSE,
-	    $result_output = FALSE,
-	    $show_question_only = TRUE,
-	    $show_feedback = FALSE,
-	    $show_correct_solution = FALSE,
-	    $show_manual_scoring = FALSE,
-	    $show_question_text = TRUE
-    ): string
+	    int $active_id,
+	    ?int $pass = null,
+	    bool $graphical_output = false,
+	    bool $result_output = false,
+	    bool $show_question_only = true,
+	    bool $show_feedback = false,
+	    bool $show_correct_solution = false,
+	    bool $show_manual_scoring = false,
+	    bool $show_question_text = true,
+	    bool $show_inline_feedback = true
+	    ): string
     {
 		global $tpl;
 		// get the solution of the user for the active pass or from the last pass if allowed
@@ -461,7 +453,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 
 		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("solution.html");
+		$template = new ilTemplate("solution.html", true, true, 'public/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion');
+		
 		$output = $this->object->getQuestion();			
 		
 		if ($show_correct_solution)
@@ -595,7 +588,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}			
 		
 		// generate the question output
-		$solutiontemplate = new ilTemplate("tpl.il_as_tst_solution_output.html",TRUE, TRUE, "Modules/TestQuestionPool");
+		$solutiontemplate = new ilTemplate("tpl.il_as_tst_solution_output.html", true, true, "components/ILIAS/TestQuestionPool");
+		
 		$questionoutput = $template->get();
 
 		$feedback = ($show_feedback) ? $this->getGenericFeedbackOutput($active_id, $pass) : "";
@@ -635,6 +629,168 @@ class assPaintQuestionGUI extends assQuestionGUI
 	public function setQuestionTabs(): void
 	{
 	    parent::setQuestionTabs();
+	}
+	
+	/**
+	 * Adds the question specific forms parts to a question property form gui.
+	 */
+	public function populateQuestionSpecificFormPart(ilPropertyFormGUI $form): ilPropertyFormGUI
+	{
+	    $plugin = $this->object->getPlugin();
+	    
+	    $form->setTitle($this->plugin->txt("edit_assPaintQuestion"));
+	    
+	    //Start Question specific
+	    // points
+	    $points = new ilNumberInputGUI($plugin->txt("points"), "points");
+	    $points->setSize(3);
+	    $points->setMinValue(1);
+	    $points->allowDecimals(1);
+	    $points->setRequired(true);
+	    $points->setValue($this->object->getPoints());
+	    $form->addItem($points);
+
+	    return $form;
+	}
+	
+	/**
+	 * Extracts the question specific values from the request and applies them
+	 * to the data object.
+	 */
+	public function writeQuestionSpecificPostData(ilPropertyFormGUI $form): void
+	{
+	    $this->object->setPoints($this->request_data_collector->float('points'));
+	}
+	
+	/**
+	 * Returns a list of postvars which will be suppressed in the form output when used in scoring adjustment.
+	 * The form elements will be shown disabled, so the users see the usual form but can only edit the settings, which
+	 * make sense in the given context.
+	 *
+	 * E.g. array('cloze_type', 'image_filename')
+	 *
+	 * @return string[]
+	 */
+	public function getAfterParticipationSuppressionQuestionPostVars(): array
+	{
+	    return [];
+	}
+	
+	public function populateAnswerSpecificFormPart(\ilPropertyFormGUI $form): ilPropertyFormGUI
+	{
+	    $plugin = $this->object->getPlugin();
+	    
+	    // background-image
+	    $image = new ilImageFileInputGUI($plugin->txt("image"), 'imagefile');
+	    $image->setSuffixes(array("jpg", "jpeg", "png"));
+	    
+	    if ($this->object->getImageFilename() != "")
+	    {
+	        $image->setImage($this->object->getImagePathWeb().$this->object->getImageFilename());
+	    }
+	    $form->addItem($image);
+	    
+	    //cancassize
+	    $canvasArea = new ilRadioGroupInputGUI($plugin->txt("canvasArea"), "canvasArea");
+	    $canvasArea->addOption(new ilRadioOption($plugin->txt("useImageSize"), 'radioImageSize', ''));
+	    $canvasArea->setInfo($plugin->txt("canvas_size_hint"));
+	    $ownSize = new ilRadioOption($plugin->txt("useOwnSize"), 'radioOwnSize', '');
+	    $canvasArea->addOption($ownSize);
+	    $canvasArea->setValue($this->object->getRadioOption());
+	    
+	    $sizeWidth = new ilNumberInputGUI($plugin->txt("width"),"sizeWidth");
+	    $sizeWidth->setValue($this->object->getCanvasWidth());
+	    $sizeWidth->setSize(6);
+	    $sizeWidth->setMinValue(450);
+	    
+	    $sizeHeight = new ilNumberInputGUI($plugin->txt("height"),"sizeHeight");
+	    $sizeHeight->setValue($this->object->getCanvasHeight());
+	    $sizeHeight->setSize(6);
+	    $sizeHeight->setMinValue(400);
+	    
+	    $ownSize->addSubItem($sizeWidth);
+	    $ownSize->addSubItem($sizeHeight);
+	    $form->addItem($canvasArea);
+	    
+	    // brushsize
+	    $line = new ilCheckboxInputGUI($plugin->txt("line"), 'lineValue');
+	    if ($this->object->getLineValue())
+	        $line->setChecked(true);
+	        $form->addItem($line);
+	        
+        // colourselection
+        /*Remove this option with version 1.1.10
+         $color = new ilCheckboxInputGUI($plugin->txt("color"), 'colorValue');
+         if ($this->object->getColorValue())
+         $color->setChecked(true);
+         $form->addItem($color);
+         */
+	         
+	    // sample solution
+	    $imageBestsolution = new ilImageFileInputGUI($plugin->txt("image_bestsolution"), 'imagefile_bestsolution');
+	    $imageBestsolution->setSuffixes(array("jpg", "jpeg", "png"));
+	    
+	    if ($this->object->getImageFilenameBestsolution() != "")
+	    {
+	        $imageBestsolution->setImage($this->object->getImagePathWeb().$this->object->getImageFilenameBestsolution());
+	    }
+	    $form->addItem($imageBestsolution);
+	    
+	    if ($this->object->getEnableForUsersConf()) {
+	        //LogCount
+	        $logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCountValue");
+	        $logCountOption->setInfo($plugin->txt("logCountOption_hint"));
+	        $logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
+	        $logCountOption->setValue($this->object->getLogCount());
+	        $form->addItem($logCountOption);
+	        
+	        //LogBkgr
+	        $logBkgrOption = new ilCheckboxInputGUI($plugin->txt("logBkgrOption"), 'logBkgrValue');
+	        $logBkgrOption->setInfo($plugin->txt("logBkgrOption_hint"));
+	        if ($this->object->getLogBkgr())
+	            $logBkgrOption->setChecked(true);
+	            $form->addItem($logBkgrOption);
+	    }
+	    
+	    return $form;
+	}
+	
+	public function writeAnswerSpecificPostData(ilPropertyFormGUI $form): void
+	{
+	    #not needed for Paint
+	}
+	
+	/**
+	 * Returns a list of postvars which will be suppressed in the form output when used in scoring adjustment.
+	 * The form elements will be shown disabled, so the users see the usual form but can only edit the settings, which
+	 * make sense in the given context.
+	 *
+	 * E.g. array('cloze_type', 'image_filename')
+	 *
+	 * @return string[]
+	 */
+	public function getAfterParticipationSuppressionAnswerPostVars(): array
+	{
+	    return [];
+	}
+	
+	public function populateCorrectionsFormProperties(ilPropertyFormGUI $form): void
+	{
+	    $this->populateQuestionSpecificFormPart($form);
+	}
+	
+	/**
+	 * @param ilPropertyFormGUI $form
+	 */
+	public function saveCorrectionsFormProperties(ilPropertyFormGUI $form): void
+	{
+	    $this->object->setPoints((float) str_replace(',', '.', $form->getInput('points')));
+	    // TODO let user change more inputs?
+	}
+	
+	public function prepareReprintableCorrectionsForm(ilPropertyFormGUI $form): void
+	{
+	    #not needed for Paint
 	}
 }
 ?>

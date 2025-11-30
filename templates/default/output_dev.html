@@ -11,8 +11,8 @@
     position: relative;
   }
 </style>
-<script src="Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_js_libs/react-0.14.3.js"></script>
-<script src="Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_js_libs/literallycanvas.js"></script>
+<script src="Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/default/_js_libs/react-0.14.3.js"></script>
+<script src="Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/default/_js_libs/literallycanvas.js"></script>
 
 <div class="fs-container_{PAINT_ID}">
 <div id="lc_{PAINT_ID}" style="height:{HEIGHT_DIV}px; width:{WIDTH}px; margin: auto;"></div>
@@ -28,7 +28,7 @@
     var imageSize_{PAINT_ID} = {width: ({WIDTH}-61), height: ({HEIGHT}-31)};
     
   	var lc_{PAINT_ID} = LC.init(document.getElementById("lc_{PAINT_ID}"), {
-	    imageURLPrefix: './Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/_assets/lc-images',
+	    imageURLPrefix: './Customizing/global/plugins/Modules/TestQuestionPool/Questions/assPaintQuestion/templates/default/_assets/lc-images',
 	    toolbarPosition: 'bottom',
 	    imageSize: imageSize_{PAINT_ID},
 	    defaultStrokeWidth: 2,

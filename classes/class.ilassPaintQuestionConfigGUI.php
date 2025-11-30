@@ -2,7 +2,7 @@
 
 /**
  * Plugin configuration class
- * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
+ * @author	Christoph Jobst <iliasplugins.christoph.jobst@outlook.de>
  * @ilCtrl_IsCalledBy ilassPaintQuestionConfigGUI: ilObjComponentSettingsGUI
  */
 class ilassPaintQuestionConfigGUI extends ilPluginConfigGUI
@@ -13,7 +13,7 @@ class ilassPaintQuestionConfigGUI extends ilPluginConfigGUI
      */
     public function performCommand($cmd) : void
     {
-        $this->plugin = $this->getPluginObject();
+        $this->plugin_object = $this->getPluginObject();
         
         switch ($cmd)
         {
@@ -83,31 +83,30 @@ class ilassPaintQuestionConfigGUI extends ilPluginConfigGUI
         $result = $ilDB->query("SELECT enable_for_users_conf, log_count_conf, log_bkgr_conf FROM il_qpl_qst_paint_conf where id = 0" );
         $configuration = $ilDB->fetchAssoc($result);		
         
-        include_once("Services/Form/classes/class.ilPropertyFormGUI.php");
         $form = new ilPropertyFormGUI();
 
         //Enable for users
-        $enableForUsers = new ilCheckboxInputGUI($this->plugin->txt("enableForUsers"), 'enableForUsers');
-        $enableForUsers->setInfo($this->plugin->txt("enableForUsers_hint"));
+        $enableForUsers = new ilCheckboxInputGUI($this->plugin_object->txt("enableForUsers"), 'enableForUsers');
+        $enableForUsers->setInfo($this->plugin_object->txt("enableForUsers_hint"));
         if ($configuration['enable_for_users_conf'])
             $enableForUsers->setChecked(true);
         $form->addItem($enableForUsers);
         
         //LogCount
-        $logCountOption = new ilSelectInputGUI($this->plugin->txt("logCountOption"),"logCountValue");
-        $logCountOption->setInfo($this->plugin->txt("logCountOption_hint"));
-        $logCountOption->setOptions (Array ( "1" => $this->plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
+        $logCountOption = new ilSelectInputGUI($this->plugin_object->txt("logCountOption"),"logCountValue");
+        $logCountOption->setInfo($this->plugin_object->txt("logCountOption_hint"));
+        $logCountOption->setOptions (Array ( "1" => $this->plugin_object->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
         $logCountOption->setValue($configuration['log_count_conf']);
         $form->addItem($logCountOption);
         
         //LogBkgr
-        $logBkgrOption = new ilCheckboxInputGUI($this->plugin->txt("logBkgrOption"), 'logBkgrValue');
-        $logBkgrOption->setInfo($this->plugin->txt("logBkgrOption_hint"));
+        $logBkgrOption = new ilCheckboxInputGUI($this->plugin_object->txt("logBkgrOption"), 'logBkgrValue');
+        $logBkgrOption->setInfo($this->plugin_object->txt("logBkgrOption_hint"));
         if ($configuration['log_bkgr_conf'])
             $logBkgrOption->setChecked(true);
          $form->addItem($logBkgrOption);
             
-         $form->addCommandButton("save", $this->plugin->txt("save"));
+         $form->addCommandButton("save", $this->plugin_object->txt("save"));
             
             $form->setFormAction($ilCtrl->getFormAction($this));
             

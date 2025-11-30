@@ -1,11 +1,8 @@
 <?php
-
-include_once "./Modules/TestQuestionPool/classes/export/qti12/class.assQuestionExport.php";
-
 /**
 * Paint question export
 *
-* @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
+ * @author	Christoph Jobst <iliasplugins.christoph.jobst@outlook.de>
 * @version	$Id:  $
 * @ingroup ModulesTestQuestionPool
 */
@@ -21,7 +18,6 @@ class assPaintQuestionExport extends assQuestionExport
     {
 		global $ilias;
 		
-		include_once("./Services/Xml/classes/class.ilXmlWriter.php");
 		$a_xml_writer = new ilXmlWriter;
 		// set xml header
 		$a_xml_writer->xmlHeader();
@@ -47,14 +43,17 @@ class assPaintQuestionExport extends assQuestionExport
 		$a_xml_writer->xmlElement("fieldlabel", NULL, "ILIAS_VERSION");
 		$a_xml_writer->xmlElement("fieldentry", NULL, $ilias->getSetting("ilias_version"));
 		$a_xml_writer->xmlEndTag("qtimetadatafield");
+		
 		$a_xml_writer->xmlStartTag("qtimetadatafield");
 		$a_xml_writer->xmlElement("fieldlabel", NULL, "QUESTIONTYPE");
 		$a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getQuestionType());
 		$a_xml_writer->xmlEndTag("qtimetadatafield");
+		
 		$a_xml_writer->xmlStartTag("qtimetadatafield");
 		$a_xml_writer->xmlElement("fieldlabel", NULL, "AUTHOR");
 		$a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getAuthor());
 		$a_xml_writer->xmlEndTag("qtimetadatafield");
+		
 		$a_xml_writer->xmlStartTag("qtimetadatafield");
 		$a_xml_writer->xmlElement("fieldlabel", NULL, "POINTS");
 		$a_xml_writer->xmlElement("fieldentry", NULL, $this->object->getPoints());
@@ -85,9 +84,9 @@ class assPaintQuestionExport extends assQuestionExport
 		if 	($this->object->getImageFilename() != "")
 		{
 			$imagetype = "image/jpeg";
-			if (preg_match("/.*\.(png|gif)$/", $this->object->getImageFilename(), $matches))
+			if (preg_match("/\.(jpe?g|png|gif)$/i", $this->object->getImageFilename(), $matches)) 
 			{
-				$imagetype = "image/" . $matches[1];
+			    $imagetype = "image/" . strtolower($matches[1]);
 			}
 			$a_xml_writer->xmlStartTag("qtimetadatafield");
 			$a_xml_writer->xmlElement("fieldlabel", NULL, "imagelabel");
@@ -143,9 +142,9 @@ class assPaintQuestionExport extends assQuestionExport
 		if 	($this->object->getImageFilenameBestsolution() != "")
 		{
 		    $imagetype = "image/jpeg";
-		    if (preg_match("/.*\.(png|gif)$/", $this->object->getImageFilenameBestsolution(), $matches))
+		    if (preg_match("/\.(jpe?g|png|gif)$/i", $this->object->getImageFilenameBestsolution(), $matches))
 		    {
-		        $imagetype = "image/" . $matches[1];
+		        $imagetype = "image/" . strtolower($matches[1]);
 		    }
 		    $a_xml_writer->xmlStartTag("qtimetadatafield");
 		    $a_xml_writer->xmlElement("fieldlabel", NULL, "imagelabelbestsolution");

@@ -3,15 +3,23 @@
 /**
  * Class for TemplateQuestion Question
  *
- * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
- * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
+ * @author	Christoph Jobst <iliasplugins.christoph.jobst@outlook.de>
  * @version	$Id:  $
  * @ingroup ModulesTestQuestionPool
  */
-class assPaintQuestion extends assQuestion
+
+use ILIAS\Test\Logging\AdditionalInformationGenerator;
+use ILIAS\Test\Participants\ParticipantRepository;
+use ILIAS\TestQuestionPool\QuestionPoolDIC;
+use ILIAS\TestQuestionPool\Questions\QuestionAutosaveable;
+
+class assPaintQuestion extends assQuestion implements ilObjQuestionScoringAdjustable, QuestionAutosaveable
 {
-    protected $plugin = null;	
-	// backgroundimage	
+    private ilPlugin $plugin;
+    
+    private ParticipantRepository $participant_repository;
+    
+    // backgroundimage	
 	var $image_filename = "";
 	// brushsize choosable? false - 0, true - 1
 	var $lineValue = 1;
@@ -37,6 +45,16 @@ class assPaintQuestion extends assQuestion
 	var $logBkgrConf = 0;
 	var $enableForUsersConf = 0;
 
+	public function getPlugin(): ilPlugin
+	{
+	    return $this->plugin;
+	}
+	
+	public function setPlugin(ilPlugin $plugin): void
+	{
+	    $this->plugin = $plugin;
+	}
+	
 	/**
 	 * Constructor
 	 *
@@ -59,10 +77,39 @@ class assPaintQuestion extends assQuestion
 		$question = ""	
 	)
 	{
+	    parent::__construct($title, $comment, $author, $owner, $question);
+	    
+	    try {
+	        global $DIC;
+	        
+	        /** @var ilComponentRepository $component_repository */
+	        $component_repository = $DIC["component.repository"];
+	        
+	        $info = null;
+	        $plugin_name = 'assPaintQuestion';
+	        $info = $component_repository->getPluginByName($plugin_name);
+	        
+	        /** @var ilComponentFactory $component_factory */
+	        $component_factory = $DIC["component.factory"];
+	        
+	        /** @var ilQuestionsPlugin $plugin_obj */
+	        $plugin_obj = $component_factory->getPlugin($info->getId());
+	        
+	        if (!is_null($info) && $info->isActive()) {
+	            $this->setPlugin($plugin_obj);
+	        } else {
+	            throw new ilPluginException($plugin_name . ' plugin is not active');
+	        }
+	    } catch (ilPluginException $e) {
+	        global $tpl;
+	        $tpl->setOnScreenMessage('failure', $e->getMessage(), true);
+	    }
+
 		// needed for excel export
 		$this->getPlugin()->loadLanguageModule();
 		
-		parent::__construct($title, $comment, $author, $owner, $question);		
+		$local_dic = QuestionPoolDIC::dic();
+		$this->participant_repository = $local_dic['participant_repository'];
 	}
 	
 	/**
@@ -83,12 +130,38 @@ class assPaintQuestion extends assQuestion
 	 *
 	 * @return mixed 	the name(s) of the additional tables (array or string)
 	 */
-	function getAdditionalTableName()
+	function getAdditionalTableName(): string
 	{
+	    return ''; // Dummy
+	    
+	    // Up to ILIAS 9
+	    /*
 	    return array(  'il_qpl_qst_paint_check',
 	                   'il_qpl_qst_paint_image');
+	    */
 	}
-
+	
+	/*
+	 * Workaround since ILIAS 10 won't accept returned arrays anymore from getAdditionalTableName, while later still transforming the forced string to an array.
+	*/
+	public function deleteAdditionalTableData(int $question_id): void
+	{
+	    $additional_table_names = [
+	        'il_qpl_qst_paint_check',
+	        'il_qpl_qst_paint_image'
+	    ];
+	    
+	    foreach ($additional_table_name as $table) {
+	        if (strlen($table)) {
+	            $this->db->manipulateF(
+	                "DELETE FROM $table WHERE question_fi = %s",
+	                ['integer'],
+	                [$question_id]
+	                );
+	        }
+	    }
+	}
+	
 	/**
 	 * Collects all texts in the question which could contain media objects
 	 * which were created with the Rich Text Editor
@@ -97,23 +170,6 @@ class assPaintQuestion extends assQuestion
 	{
 	    $text = parent::getRTETextWithMediaObjects();
 	    return $text;
-	}
-	
-	/**
-	 * Get the plugin object
-	 *
-	 * @return object The plugin object
-	 */
-	public function getPlugin() {
-	    global $DIC;
-	    
-	    if ($this->plugin == null)
-	    {
-	        /** @var ilComponentFactory $component_factory */
-	        $component_factory = $DIC["component.factory"];
-	        $this->plugin = $component_factory->getPlugin('assPaintQuestion');
-	    }
-	    return $this->plugin;
 	}
 	
 	/**
@@ -264,6 +320,7 @@ class assPaintQuestion extends assQuestion
 	{
 	    return $this->logBkgrConf;
 	}	
+	
 	/**
 	 * Set the image file name
 	 *
@@ -271,62 +328,81 @@ class assPaintQuestion extends assQuestion
 	 * @access public
 	 * @see $image_filename
 	 */
-	function setImageFilename($image_filename, $image_tempfilename = "") 
-	{		
-		if (!empty($image_filename)) 
-		{
-			$image_filename = str_replace(" ", "_", $image_filename);
-			$this->image_filename = $image_filename;
-		}
-		if (!empty($image_tempfilename)) 
-		{
-			$imagepath = $this->getImagePath();
-			if (!file_exists($imagepath)) 
-			{
-			    ilFileUtils::makeDirParents($imagepath);
-			}
-			//** TODO  hier kommt noch eine Fehlermeldung, obwohl das Bild am Ende im richtigen Ornder liegt
-			
-			/*if (!ilUtil::moveUploadedFile($image_tempfilename, $image_filename, $imagepath.'/'.$image_filename))
-			{
-				$this->ilias->raiseError("The image could not be uploaded!", $this->ilias->error_obj->MESSAGE);
-			}*/
-			move_uploaded_file($image_tempfilename, $imagepath.'/'.$image_filename);			
-		}
-	}
-
-	/**
-	 * Set the image file name
-	 *
-	 * @param string $image_file name.
-	 * @access public
-	 * @see $image_filename
-	 */
-	function setImageFilenameBestsolution($image_filename, $image_tempfilename = "")
-	{
-	    if (!empty($image_filename))
-	    {
-	        $microtime = round(microtime(true) * 1000);
-	        $image_filename = $microtime . '.' . pathinfo($image_filename, PATHINFO_EXTENSION);
-	        $this->image_filename_bestsolution = $image_filename;
-	    }
-	    if (!empty($image_tempfilename))
-	    {
-	        $imagepath = $this->getImagePath();
-	        if (!file_exists($imagepath))
-	        {
-	            ilFileUtils::makeDirParents($imagepath);
-	        }
-	        //** TODO  hier kommt noch eine Fehlermeldung, obwohl das Bild am Ende im richtigen Ornder liegt
-	        
-	        /*if (!ilUtil::moveUploadedFile($image_tempfilename, $image_filename, $imagepath.'/'.$image_filename))
-	         {
-	         $this->ilias->raiseError("The image could not be uploaded!", $this->ilias->error_obj->MESSAGE);
-	         }*/
-	        move_uploaded_file($image_tempfilename, $imagepath.'/'.$image_filename);
-	    }
-	}
-
+    public function setImageFilename(
+        string $image_filename,
+        string $image_tempfilename = ''
+        ): int
+    {
+            if (empty($image_tempfilename)) {
+                return 0;
+            }
+            
+            if ($this->getId() < 1) {
+                $this->createNewQuestion();
+            }
+            
+            $cleaned_image_filename = str_replace(" ", "_", $image_filename);
+            $imagepath = $this->getImagePath();
+            if (!file_exists($imagepath)) {
+                ilFileUtils::makeDirParents($imagepath);
+            }
+            
+            if (!ilFileUtils::moveUploadedFile($image_tempfilename, $cleaned_image_filename, $imagepath . $cleaned_image_filename)) {
+                return 2;
+            }
+            
+            $mimetype = ilObjMediaObject::getMimeType($imagepath . $cleaned_image_filename);
+            if (!preg_match("/^image/", $mimetype)) {
+                unlink($imagepath . $cleaned_image_filename);
+                return 1;
+            }
+            
+            $this->image_filename = $cleaned_image_filename;
+            
+            return 0;
+    }
+    
+    /**
+     * Set the image file name for the best solution
+     *
+     * @param string $image_file name.
+     * @access public
+     * @see $image_filename
+     */
+    public function setImageFilenameBestsolution(
+        string $image_filename,
+        string $image_tempfilename = ''
+        ): int
+    {
+        if (empty($image_tempfilename)) {
+            return 0;
+        }
+        
+        if ($this->getId() < 1) {
+            $this->createNewQuestion();
+        }
+        
+        $cleaned_image_filename = str_replace(" ", "_", $image_filename);
+        $imagepath = $this->getImagePath();
+        if (!file_exists($imagepath)) {
+            ilFileUtils::makeDirParents($imagepath);
+        }
+        
+        if (!ilFileUtils::moveUploadedFile($image_tempfilename, $cleaned_image_filename, $imagepath . $cleaned_image_filename)) {
+            return 2;
+        }
+        
+        $mimetype = ilObjMediaObject::getMimeType($imagepath . $cleaned_image_filename);
+        if (!preg_match("/^image/", $mimetype)) {
+            unlink($imagepath . $cleaned_image_filename);
+            return 1;
+        }
+        
+        $this->image_filename_bestsolution = $cleaned_image_filename;
+        
+        return 0;
+    }
+            
 	function resizeImage($width, $height){
 		
 	    global $DIC;
@@ -525,148 +601,22 @@ class assPaintQuestion extends assQuestion
 	}
 
 	/**
-	 * Duplicates a question
-	 * This is used for copying a question to a test
-	 *
-	 * @access public
-	 */
-	function duplicate($for_test = true, $title = "", $author = "", $owner = "", $testObjId = null) : int
-	{
-	    if ($this->getId() <= 0)
-	    {
-	        // The question has not been saved. It cannot be duplicated
-	        return -1;
-	    }
-	    
-	    // make a real clone to keep the object unchanged
-	    $clone = clone $this;
-	    
-	    $original_id = $this->questioninfo->getOriginalId($this->id);
-	    $clone->setId(-1);
-	    
-	    if( (int) $testObjId > 0 )
-	    {
-	        $clone->setObjId($testObjId);
-	    }
-	    
-	    if (!empty($title))
-	    {
-	        $clone->setTitle($title);
-	    }
-	    if (!empty($author))
-	    {
-	        $clone->setAuthor($author);
-	    }
-	    if (!empty($owner))
-	    {
-	        $clone->setOwner($owner);
-	    }
-	    
-	    if ($for_test)
-	    {
-	        $clone->saveToDb($original_id);
-	    }
-	    else
-	    {
-	        $clone->saveToDb();
-	    }
-	    
-	    // copy question page content
-	    $clone->copyPageOfQuestion($this->getId());
-	    // copy XHTML media objects
-	    $clone->copyXHTMLMediaObjectsOfQuestion($this->getId());
-	    
-		// duplicate the image
-	    $clone->duplicateImage($this->getId(), $this->getObjId());
-		
-		$clone->onDuplicate($this->getObjId(), $this->getId(), $clone->getObjId(), $clone->getId());
-		
-		return $clone->getId();
-	}
-
-	/**
-	 * Copies a question
+	 * Copies question specific parts of the question, e.g. files
 	 * This is used when a question is copied on a question pool
 	 *
-	 * @param integer	$target_questionpool_id
-	 * @param string	$title
+	 * @param assQuestion $target
 	 *
-	 * @return void|integer Id of the clone or nothing.
+	 * @return assQuestion
 	 */
-	function copyObject($target_questionpool_id, $title = "")
+	protected function cloneQuestionTypeSpecificProperties(
+	    \assQuestion $target
+	    ): \assQuestion
 	{
-	    if ($this->getId() <= 0)
-	    {
-	        // The question has not been saved. It cannot be duplicated
-	        return;
-	    }
-	    
-	    // make a real clone to keep the object unchanged
-	    $clone = clone $this;
-	    
-	    $original_id = assQuestion::_getOriginalId($this->getId());
-	    $source_questionpool_id = $this->getObjId();
-	    $clone->setId(-1);
-	    $clone->setObjId($target_questionpool_id);
-	    if (!empty($title))
-	    {
-	        $clone->setTitle($title);
-	    }
-	    
-	    // save the clone data
-	    $clone->saveToDb();
+	    $target->copyImage($this->getId(), $this->getObjId());
 
-	    // copy question page content
-	    $clone->copyPageOfQuestion($original_id);
-	    // copy XHTML media objects
-	    $clone->copyXHTMLMediaObjectsOfQuestion($original_id);
-	    
-		// duplicate the image
-		$clone->copyImage($original_id, $source_questionpool_id);
-		
-		// call the event handler for copy
-		$clone->onCopy($source_questionpool_id, $original_id, $clone->getObjId(), $clone->getId());
-		
-		return $clone->getId();
+        return $target;
 	}
-
-	function duplicateImage($question_id, $objectId = null)
-	{
-		$imagepath = $this->getImagePath();
-		$imagepath_original = str_replace("/$this->id/images", "/$question_id/images", $imagepath);
-		
-		if( (int)$objectId > 0 )
-		{
-			$imagepath_original = str_replace("/$this->obj_id/", "/$objectId/", $imagepath_original);
-		}
-		
-		if (!file_exists($imagepath)) {
-		    ilFileUtils::makeDirParents($imagepath);
-		}
-		$filename = $this->getImageFilename();
-		
-		if (!empty($filename)) {
-			if (!copy($imagepath_original . $filename, $imagepath . $filename)) {
-				print "Image could not be duplicated.";
-			}
-		}
-		
-		if ($this->getResizedImageStatus() == 1){
-			if (!copy($imagepath_original . 'resized_' .$filename, $imagepath . 'resized_' . $filename)) {
-				print "Resized image could not be duplicated.";
-			}
-		}
-		
-		$filenameSampleSolution = $this->getImageFilenameBestsolution();
-		
-		if (!empty($filenameSampleSolution)) {
-		    if (!copy($imagepath_original . $filenameSampleSolution, $imagepath . $filenameSampleSolution)) {
-		        print "Image could not be duplicated.";
-		    }
-		}
-		
-	}
-
+	
 	function copyImage($question_id, $source_questionpool)
 	{
 		$imagepath = $this->getImagePath();
@@ -699,48 +649,6 @@ class assPaintQuestion extends assQuestion
 		        print "Image could not be copied.";
 		    }
 		}
-	}
-	
-	/**
-	 * Create a new original question in a question pool for a test question
-	 * @param int $targetParentId			id of the target question pool
-	 * @param string $targetQuestionTitle
-	 * @return int|void
-	 */
-	public function createNewOriginalFromThisDuplicate($targetParentId, $targetQuestionTitle = "")
-	{
-		if ($this->id <= 0)
-		{
-			// The question has not been saved. It cannot be duplicated
-			return;
-		}
-				
-		$sourceQuestionId = $this->id;
-		$sourceParentId = $this->getObjId();
-		
-		// make a real clone to keep the object unchanged
-		$clone = clone $this;
-		$clone->setId(-1);
-		
-		$clone->setObjId($targetParentId);
-		
-		if (!empty($targetQuestionTitle))
-		{
-		    $clone->setTitle($targetQuestionTitle);
-		}
-		
-		$clone->saveToDb();
-		// copy question page content
-		$clone->copyPageOfQuestion($sourceQuestionId);
-		// copy XHTML media objects
-		$clone->copyXHTMLMediaObjectsOfQuestion($sourceQuestionId);
-		
-		// duplicate the image
-		$clone->copyImage($sourceQuestionId, $sourceParentId);
-		
-		$clone->onCopy($sourceParentId, $sourceQuestionId, $clone->getObjId(), $clone->getId());
-		
-		return $clone->getId();
 	}
 	
 	/**
@@ -833,12 +741,7 @@ class assPaintQuestion extends assQuestion
 	 * @access public
 	 * @see  assQuestion::calculateReachedPoints()
 	 */
-	function calculateReachedPoints($active_id, $pass = NULL, $authorizedSolution = true, $returndetails = false) :array|float
-	{
-	    if( $returndetails )
-	    {
-	        throw new ilTestException('return details not implemented for '.__METHOD__);
-	    }
+	public function calculateReachedPoints(int $active_id, ?int $pass = null, bool $authorized_solution = true): float{
 	    
 		global $ilDB;
 		
@@ -847,19 +750,20 @@ class assPaintQuestion extends assQuestion
 			$pass = $this->getSolutionMaxPass($active_id);
 		}
 
-		$solution = $this->getSolutionStored($active_id, $pass, $authorizedSolution);
+		$solution = $this->getSolutionStored($active_id, $pass, $authorized_solution);
 		return $this->calculateReachedPointsForSolution($solution);
 	}
 	
-    /**
-	* Returns the filesystem path for file uploads
-	*/
-	protected function getFileUploadPath($test_id, $active_id)
+	/**
+	 * Returns the filesystem path for file uploads
+	 */
+	public function getFileUploadPath($test_id, $active_id, $question_id = null): string
 	{
-		$question_id = $this->getId();
-		return CLIENT_WEB_DIR . "/assessment/tst_$test_id/$active_id/$question_id/files/";
+	    if (is_null($question_id)) {
+	        $question_id = $this->getId();
+	    }
+	    return CLIENT_WEB_DIR . "/assessment/tst_{$test_id}/{$active_id}/{$question_id}/files/";
 	}
-	
 	/**
 	 * Saves the learners input of the question to the database
 	 *
@@ -914,7 +818,7 @@ class assPaintQuestion extends assQuestion
 					if (count($files_draw_layer) >= $counter)
 					{
 						usort($files_draw_layer, function($a, $b) {
-							return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
+							return intval(explode('_', $a)[0]) <=> intval(explode('_', $b)[0]);
 						});
 							unlink($files_draw_layer[0]); // delete oldest file
 					}
@@ -922,7 +826,7 @@ class assPaintQuestion extends assQuestion
 					if (count($files_full_backup) >= $counter)
 					{
 						usort($files_full_backup, function($a, $b) {
-							return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
+						    return intval(explode('_', $a)[0]) <=> intval(explode('_', $b)[0]);
 						});
 							unlink($files_full_backup[0]); // delete oldest file
 					}
@@ -1031,24 +935,7 @@ class assPaintQuestion extends assQuestion
 				$entered_values = true;
 			}
 		});
-			
-		// Log whether the user entered values
-		if (ilObjAssessmentFolder::_enabledAssessmentLogging())
-		{
-			assQuestion::logAction($this->lng->txtlng(
-					'assessment',
-					$entered_values ? 'log_user_entered_values' : 'log_user_not_entered_values',
-					ilObjAssessmentFolder::_getLogLanguage()
-					),
-					$active_id,
-					$this->getId()
-					);
-		}
-		
-		// submitted solution is valid
 		return true;
-		
-		
 	}
 
 	/**
@@ -1067,10 +954,10 @@ class assPaintQuestion extends assQuestion
 	/**
 	* Returns the name of the answer table in the database
 	*
-	* @return string The answer table name
-	* @access public
-	*/
-	public function getAnswerTableName(): string
+	 * @return array|string The answer table name
+	 * @access public
+	 */
+	function getAnswerTableName() : array|string
 	{ 
 	    return "";
 	}
@@ -1081,11 +968,10 @@ class assPaintQuestion extends assQuestion
 	 * @access public
 	 * @see assQuestion::setExportDetailsXLS()
 	 */
-	public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
+	public function setExportDetailsXLSX(ilAssExcelFormatHelper $worksheet, int $startrow, int $col, int $active_id, int $pass) : int
 	{
-		
-		parent::setExportDetailsXLS($worksheet, $startrow, $active_id, $pass);
-		
+	    parent::setExportDetailsXLSX($worksheet, $startrow, $col, $active_id, $pass);
+	    
 		//BASE64-String in Excel won't make much sense, so leave the qst
 		/*
 		include_once ("./Services/Excel/classes/class.ilExcelUtils.php");
@@ -1100,6 +986,56 @@ class assPaintQuestion extends assQuestion
 		*/
 		
 		return $startrow + 1;
+	}
+	
+	// Generic log
+	public function toLog(AdditionalInformationGenerator $additional_info) : array
+	{
+	    return [
+	        AdditionalInformationGenerator::KEY_QUESTION_TYPE => (string) $this->getQuestionType(),
+	        AdditionalInformationGenerator::KEY_QUESTION_TITLE => $this->getTitleForHTMLOutput(),
+	        AdditionalInformationGenerator::KEY_QUESTION_TEXT => $this->formatSAQuestion($this->getQuestion()),
+	        AdditionalInformationGenerator::KEY_QUESTION_REACHABLE_POINTS => $this->getPoints(),
+	        AdditionalInformationGenerator::KEY_FEEDBACK => [
+	            AdditionalInformationGenerator::KEY_QUESTION_FEEDBACK_ON_INCOMPLETE => $this->formatSAQuestion($this->feedbackOBJ->getGenericFeedbackTestPresentation($this->getId(), false)),
+	            AdditionalInformationGenerator::KEY_QUESTION_FEEDBACK_ON_COMPLETE => $this->formatSAQuestion($this->feedbackOBJ->getGenericFeedbackTestPresentation($this->getId(), true))
+	        ]
+	    ];
+	}
+	
+	// FilePath as log entry, value1 is JSON representation for canvas
+	protected function solutionValuesToLog(
+	    AdditionalInformationGenerator $additional_info,
+	    array $solution_values
+	    ): string {
+	        if (!array_key_exists(0, $solution_values)
+	            || !array_key_exists('value2', $solution_values[0])) {
+	                return '';
+	            }
+	            return $this->refinery->string()->stripTags()->transform(
+	                html_entity_decode($solution_values[0]['value2'])
+	                );
+	}
+	
+	// FilePath as log entry, value1 is JSON representation for canvas
+	public function solutionValuesToText(array $solution_values) : string
+	{
+	    if (!array_key_exists(0, $solution_values)
+	        || !array_key_exists('value2', $solution_values[0])) {
+	            return '';
+	        }
+	        return $solution_values[0]['value2'];
+	}
+	
+	/**
+	 * Saves a record to the question types additional data table.
+	 *
+	 * @return mixed
+	 */
+	public function saveAdditionalQuestionDataToDb()
+	{
+	    // nothing to save for Audio
+	    return 0;
 	}
 }
 ?>

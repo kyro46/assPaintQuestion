@@ -1,12 +1,8 @@
 <?php
-
-include_once "./Modules/TestQuestionPool/classes/import/qti12/class.assQuestionImport.php";
-
 /**
 * Class for PaintQuestion import
 *
-* @author Yves Annanias <yves.annanias@llz.uni-halle.de>
-* @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
+* @author	Christoph Jobst <iliasplugins.christoph.jobst@outlook.de>
 * @version	$Id: $
 * @ingroup 	ModulesTestQuestionPool
 */
@@ -25,9 +21,8 @@ class assPaintQuestionImport extends assQuestionImport
 	* @param array $import_mapping An array containing references to included ILIAS objects
 	* @access public
 	*/
-    function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, $import_mapping, array $solutionhints = []) : array
-    {
-		global $ilUser;
+    function fromXML(string $importdirectory, int $user_id, ilQTIItem $item, int $questionpool_id, ?int $tst_id, ?ilObject &$tst_object, int &$question_counter, array $import_mapping): array    {
+        global $ilUser, $ilLog;
 
 		// empty session variable for imported xhtml mobs
 		unset($_SESSION["import_mob_xhtml"]);
@@ -127,8 +122,6 @@ class assPaintQuestionImport extends assQuestionImport
 		$questiontext = $this->object->getQuestion();
 		if (is_array($_SESSION["import_mob_xhtml"]))
 		{
-			include_once "./Services/MediaObjects/classes/class.ilObjMediaObject.php";
-			include_once "./Services/RTE/classes/class.ilRTE.php";
 			foreach ($_SESSION["import_mob_xhtml"] as $mob)
 			{
 				if ($tst_id > 0)
@@ -139,10 +132,9 @@ class assPaintQuestionImport extends assQuestionImport
 				{
 					$importfile = $this->getQplImportArchivDirectory() . '/' . $mob["uri"];
 				}
-				global $ilLog;
 				$ilLog->write($importfile);
 		
-				$media_object =& ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, FALSE);
+				$media_object = ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, FALSE);
 				ilObjMediaObject::_saveUsage($media_object->getId(), "qpl:html", $this->object->getId());
 		
 				// images in question text
@@ -173,12 +165,11 @@ class assPaintQuestionImport extends assQuestionImport
 				"content" => $item->getMetadataEntry("backgroundimage")
 			);
 			
-			$this->object->setImageFilename($questionimage["label"]);			
-			$image =& base64_decode($questionimage["content"]);
+			$this->object->image_filename = $questionimage["label"];
+			$image = base64_decode($questionimage["content"]);
 			$imagepath = $this->object->getImagePath();
 			if (!file_exists($imagepath))
 			{
-				include_once "./Services/Utilities/classes/class.ilUtil.php";
 				ilFileUtils::makeDirParents($imagepath);
 			}
 			$imagepath .=  $questionimage["label"];
@@ -204,7 +195,7 @@ class assPaintQuestionImport extends assQuestionImport
 						"content" => $item->getMetadataEntry("resizedbackgroundimage")
 				);
 				
-				$image =& base64_decode($resizedquestionimage["content"]);
+				$image = base64_decode($resizedquestionimage["content"]);
 				$imagepath = $this->object->getImagePath();
 				$imagepath .=  $resizedquestionimage["label"];
 				$fh = fopen($imagepath, "wb");
@@ -240,12 +231,11 @@ class assPaintQuestionImport extends assQuestionImport
 		        "content" => $item->getMetadataEntry("imagebestsolution")
 		    );
 		    
-		    $this->object->setImageFilenameBestsolution($questionimage["label"]);
-		    $image =& base64_decode($questionimage["content"]);
+		    $this->object->image_filename_bestsolution = $questionimage["label"];
+		    $image = base64_decode($questionimage["content"]);
 		    $imagepath = $this->object->getImagePath();
 		    if (!file_exists($imagepath))
 		    {
-		        include_once "./Services/Utilities/classes/class.ilUtil.php";
 		        ilFileUtils::makeDirParents($imagepath);
 		    }
 		    $imagepath .= $this->object->getImageFilenameBestsolution();
@@ -270,22 +260,11 @@ class assPaintQuestionImport extends assQuestionImport
 		// Now save the question again
 		$this->object->saveToDb();
 		
-		// Save solutionhints
-		foreach ($solutionhints as $hint) {
-		    $h = new ilAssQuestionHint();
-		    $h->setQuestionId($this->object->getId());
-		    $h->setIndex($hint['index']);
-		    $h->setPoints($hint['points']);
-		    $h->setText($hint['txt']);
-		    $h->save();
-		}
-		
-		
 		// import mapping for tests
 		if ($tst_id > 0)
 		{
 			$q_1_id = $this->object->getId();
-			$question_id = $this->object->duplicate(true, null, null, null, $tst_id);
+			$question_id = $this->object->duplicate(true, $this->object->getTitle(), $this->object->getAuthor(), $this->object->getOwner(), $tst_id);
 			$tst_object->questions[$question_counter++] = $question_id;
 			$import_mapping[$item->getIdent()] = array("pool" => $q_1_id, "test" => $question_id);
 		}

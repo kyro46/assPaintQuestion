@@ -1,7 +1,7 @@
 # assPaintQuestion
-Paint-Questiontypeplugin for ILIAS 9
+Paint-Questiontypeplugin for ILIAS 10
 
-For ILIAS 4.3 to 8 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases) and the corresponding branches.
+For ILIAS 4.3 to 9 see the [**Releases**](https://github.com/kyro46/assPaintQuestion/releases) and the corresponding branches.
 
 
 ### Questiontype that allows drawing on a backgroundimage or a plain canvas ###
@@ -19,8 +19,8 @@ This plugin will add a questiontype, that allows:
 Install the plugin
 
 ```bash
-mkdir -p Customizing/global/plugins/Modules/TestQuestionPool/Questions  
-cd Customizing/global/plugins/Modules/TestQuestionPool/Questions
+mkdir -p public/Customizing/global/plugins/Modules/TestQuestionPool/Questions  
+cd public/Customizing/global/plugins/Modules/TestQuestionPool/Questions
 git clone https://github.com/kyro46/assPaintQuestion.git
 ```
 
@@ -31,7 +31,7 @@ composer install --no-dev
 php setup/setup.php update
 ```
 
-and activate it in the ILIAS-Admin-GUI. Manual correction has to be enabled for this question type.
+and activate it in the ILIAS-Admin-GUI.
 
 ### Known Problems ###
 

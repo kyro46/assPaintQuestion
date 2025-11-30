@@ -1,12 +1,9 @@
 <?php
 
-require_once 'Modules/TestQuestionPool/classes/feedback/class.ilAssSingleOptionQuestionFeedback.php';
-
 /**
- * Cas Question object
+ * assPaintQuestion object
  *
- * @author Fred Neumann <fred.neumann@ili.fau.de>
- * @author Jesus Copado <jesus.copado@ili.fau.de>
+ * @author	Christoph Jobst <iliasplugins.christoph.jobst@outlook.de>
  * @version $Id$
  *
  */
