@@ -801,7 +801,7 @@ class assPaintQuestion extends assQuestion implements ilObjQuestionScoringAdjust
 
 			$this->removeCurrentSolution($active_id, $pass, $authorized);
 			
-			if (strlen($solution["value2"]) > 0) {
+			if (isset($solution["value2"]) && strlen((string)$solution["value2"]) > 0) {
 				$microtime = round(microtime(true) * 1000);
 				$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask_" . $pass . ".png";
 				
