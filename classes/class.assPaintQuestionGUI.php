@@ -325,7 +325,7 @@ class assPaintQuestionGUI extends assQuestionGUI implements ilGuiQuestionScoring
 		$user_solution = array();
 		if ($active_id)
 		{
-		    $user_solution = $this->object->getSolutionStored($active_id, $pass, true);
+		    $user_solution = $this->object->getSolutionStored($active_id, $pass, null);
 			if (!is_array($user_solution)) 
 			{
 				$user_solution = array();
