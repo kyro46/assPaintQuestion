@@ -443,7 +443,7 @@ class assPaintQuestionGUI extends assQuestionGUI implements ilGuiQuestionScoring
 		if (($active_id > 0) && (!$show_correct_solution))
 		{
 			// get the solutions of a user
-		    $user_solution = $this->object->getSolutionStored($active_id, $pass, true);
+		    $user_solution = $this->object->getSolutionStored($active_id, $pass, null);
 			if (!is_array($user_solution)) 
 			{
 				$user_solution = array();
