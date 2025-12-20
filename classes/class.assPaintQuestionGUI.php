@@ -194,30 +194,32 @@ class assPaintQuestionGUI extends assQuestionGUI
 	        $this->object->setPoints( str_replace( ",", ".", $_POST["points"] ));
 	        
 	        //Background
-	        if ($_POST['imagefile_delete'])
+	        if (!empty($_POST['imagefile_delete']))
 	        {
 	            $this->object->deleteImage();
 	        } else
 	        {
-	            if (strlen($_FILES['imagefile']['tmp_name']))
+	            if (isset($_FILES['imagefile']) &&
+	                $_FILES['imagefile']['error'] === UPLOAD_ERR_OK)
 	            {
 	                $this->object->deleteImage(); //Something (probably new) was uploaded - delete the old image
 	                $this->object->setImageFilename($_FILES['imagefile']['name'], $_FILES['imagefile']['tmp_name']);
 	            }
 	        }
-	        $this->object->setRadioOption($_POST["canvasArea"]);
-	        $this->object->setCanvasWidth($_POST["sizeWidth"]);
-	        $this->object->setCanvasHeight($_POST["sizeHeight"]);
-	        $this->object->setLineValue($_POST['lineValue']);
-	        $this->object->setColorValue($_POST['colorValue']);
+	        $this->object->setRadioOption($_POST['canvasArea']);
+	        $this->object->setCanvasWidth(!empty($_POST['sizeWidth']) ? (int) $_POST['sizeWidth'] : 450);
+	        $this->object->setCanvasHeight(!empty($_POST['sizeHeight']) ? (int) $_POST['sizeHeight'] : 400);
+	        $this->object->setLineValue($_POST['lineValue'] ?? 0);
+	        $this->object->setColorValue($_POST['colorValue'] ?? 0);
 	        
 	        //Sample solution
-	        if ($_POST['imagefile_bestsolution_delete'])
+	        if (!empty($_POST['imagefile_bestsolution_delete']))
 	        {
 	            $this->object->deleteImageBestsolution();
 	        } else
 	        {
-	            if (strlen($_FILES['imagefile_bestsolution']['tmp_name']))
+	            if (isset($_FILES['imagefile_bestsolution']) &&
+	                $_FILES['imagefile_bestsolution']['error'] === UPLOAD_ERR_OK)
 	            {
 	                $this->object->deleteImageBestsolution(); //Something (probably new) was uploaded - delete the old image
 	                $this->object->setImageFilenameBestsolution($_FILES['imagefile_bestsolution']['name'], $_FILES['imagefile_bestsolution']['tmp_name']);
@@ -225,8 +227,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 	        }
 	        
 	        if ($this->object->getEnableForUsersConf()) {
-	           $this->object->setLogCount($_POST['logCountValue']);
-	           $this->object->setLogBkgr($_POST['logBkgrValue']);
+	            $this->object->setLogCount($_POST['logCountValue'] ?? 3);
+	            $this->object->setLogBkgr($_POST['logBkgrValue'] ?? 0);
 	        }
 
 	        //Compute resized picture as early as possible
@@ -409,7 +411,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}							
 		
 		if ($user_solution["value2"] != 'path'){
-			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\",$user_solution["value1"]));
+			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\", (string) ($user_solution["value1"] ?? '')));
 		}
 		$template->setVariable("RESUME", ilLegacyFormElementsUtil::prepareFormOutput($base64));	
 		
