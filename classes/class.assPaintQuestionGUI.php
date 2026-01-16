@@ -7,12 +7,12 @@
  * @author Yves Annanias <yves.annanias@llz.uni-halle.de>
  * @author Christoph Jobst <cjobst@wifa.uni-leipzig.de>
  * @ingroup ModulesTestQuestionPool
- * 
+ *
  * @ilctrl_iscalledby assPaintQuestionGUI: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilctrl_calls assPaintQuestionGUI: ilFormPropertyDispatchGUI
  */
 class assPaintQuestionGUI extends assQuestionGUI
-{	 
+{
     /**
     * @const	string	URL base path for including special javascript and css files
     */
@@ -23,11 +23,11 @@ class assPaintQuestionGUI extends assQuestionGUI
      * 					Note: this does not yet work with $tpl->addJavascript()
      */
     const URL_SUFFIX = "?css_version=1.5.0";
-    
+
 	var $plugin = null;
 
 	public assQuestion $object;
-	
+
 	/**
 	 * Constructor
 	 *
@@ -35,11 +35,11 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * @access public
 	 */
 	public function __construct($id = -1)
-	{	 
+	{
 	    global $DIC;
-	    
+
 		parent::__construct();
-		
+
 		/** @var ilComponentFactory $component_factory */
 		$component_factory = $DIC["component.factory"];
 		$this->plugin = $component_factory->getPlugin('assPaintQuestion');
@@ -48,8 +48,8 @@ class assPaintQuestionGUI extends assQuestionGUI
 		{
 		    $this->object->loadFromDb($id);
 		}
-	}	
-	
+	}
+
 	/**
 	 * Creates an output of the edit form for the question
 	 *
@@ -58,11 +58,11 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 */
 	public function editQuestion($checkonly = FALSE)
 	{
-		global $ilDB;					
+		global $ilDB;
 
 		$save = $this->isSaveCommand();
-		$plugin = $this->object->getPlugin();		
-		
+		$plugin = $this->object->getPlugin();
+
 		$this->getQuestionTemplate();
 		include_once("./Services/Form/classes/class.ilPropertyFormGUI.php");
 		$form = new ilPropertyFormGUI();
@@ -71,9 +71,9 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$form->setMultipart(FALSE);
 		$form->setTableWidth("100%");
 		$form->setId("assPaintQuestion");
-		// Baseinput: title, author, description, question, working time (assessment mode)		
+		// Baseinput: title, author, description, question, working time (assessment mode)
 		$this->addBasicQuestionFormProperties($form);
-		
+
 		//Start Question specific
 		// points
 		$points = new ilNumberInputGUI($plugin->txt("points"), "points");
@@ -83,17 +83,17 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$points->setRequired(true);
 		$points->setValue($this->object->getPoints());
 		$form->addItem($points);
-		
-		// background-image		
+
+		// background-image
 		$image = new ilImageFileInputGUI($plugin->txt("image"), 'imagefile');
 		$image->setSuffixes(array("jpg", "jpeg", "png"));
-		
+
 		if ($this->object->getImageFilename() != "")
 		{
 			$image->setImage($this->object->getImagePathWeb().$this->object->getImageFilename());
 		}
 		$form->addItem($image);
-		
+
 		//cancassize
 		$canvasArea = new ilRadioGroupInputGUI($plugin->txt("canvasArea"), "canvasArea");
 		$canvasArea->addOption(new ilRadioOption($plugin->txt("useImageSize"), 'radioImageSize', ''));
@@ -101,35 +101,35 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$ownSize = new ilRadioOption($plugin->txt("useOwnSize"), 'radioOwnSize', '');
 		$canvasArea->addOption($ownSize);
 		$canvasArea->setValue($this->object->getRadioOption());
-		
+
 		$sizeWidth = new ilNumberInputGUI($plugin->txt("width"),"sizeWidth");
-		$sizeWidth->setValue($this->object->getCanvasWidth());		
+		$sizeWidth->setValue($this->object->getCanvasWidth());
 		$sizeWidth->setSize(6);
 		$sizeWidth->setMinValue(450);
-		
+
 		$sizeHeight = new ilNumberInputGUI($plugin->txt("height"),"sizeHeight");
 		$sizeHeight->setValue($this->object->getCanvasHeight());
 		$sizeHeight->setSize(6);
 		$sizeHeight->setMinValue(400);
-		
+
 		$ownSize->addSubItem($sizeWidth);
 		$ownSize->addSubItem($sizeHeight);
 		$form->addItem($canvasArea);
-		
+
 		// brushsize
 		$line = new ilCheckboxInputGUI($plugin->txt("line"), 'lineValue');
 		if ($this->object->getLineValue())
 			$line->setChecked(true);
 		$form->addItem($line);
-		
+
 		// colourselection
 		/*Remove this option with version 1.1.10
 		$color = new ilCheckboxInputGUI($plugin->txt("color"), 'colorValue');
 		if ($this->object->getColorValue())
 			$color->setChecked(true);
-		$form->addItem($color);	
+		$form->addItem($color);
 		*/
-		
+
 		// sample solution
 		$imageBestsolution = new ilImageFileInputGUI($plugin->txt("image_bestsolution"), 'imagefile_bestsolution');
 		$imageBestsolution->setSuffixes(array("jpg", "jpeg", "png"));
@@ -139,7 +139,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		    $imageBestsolution->setImage($this->object->getImagePathWeb().$this->object->getImageFilenameBestsolution());
 		}
 		$form->addItem($imageBestsolution);
-		
+
 		if ($this->object->getEnableForUsersConf()) {
 			//LogCount
 			$logCountOption = new ilSelectInputGUI($plugin->txt("logCountOption"),"logCountValue");
@@ -147,7 +147,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$logCountOption->setOptions (Array ( "1" => $plugin->txt("logCountOption_off"), "3" => "3", "10" => "10", "50" => "50", "100" => "100"));
 			$logCountOption->setValue($this->object->getLogCount());
 			$form->addItem($logCountOption);
-	
+
 			//LogBkgr
 			$logBkgrOption = new ilCheckboxInputGUI($plugin->txt("logBkgrOption"), 'logBkgrValue');
 			$logBkgrOption->setInfo($plugin->txt("logBkgrOption_hint"));
@@ -155,10 +155,10 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$logBkgrOption->setChecked(true);
 			$form->addItem($logBkgrOption);
 		}
-		
-		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());		
+
+		$this->tpl->setVariable("QUESTION_DATA", $form->getHTML());
 		//End Question specific
-		
+
 		$this->populateTaxonomyFormSection($form);
 		$this->addQuestionFormCommandButtons($form);
 
@@ -192,7 +192,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	    {
 	        $this->writeQuestionGenericPostData();
 	        $this->object->setPoints( str_replace( ",", ".", $_POST["points"] ));
-	        
+
 	        //Background
 	        if (!empty($_POST['imagefile_delete']))
 	        {
@@ -211,7 +211,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	        $this->object->setCanvasHeight(!empty($_POST['sizeHeight']) ? (int) $_POST['sizeHeight'] : 400);
 	        $this->object->setLineValue($_POST['lineValue'] ?? 0);
 	        $this->object->setColorValue($_POST['colorValue'] ?? 0);
-	        
+
 	        //Sample solution
 	        if (!empty($_POST['imagefile_bestsolution_delete']))
 	        {
@@ -225,7 +225,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	                $this->object->setImageFilenameBestsolution($_FILES['imagefile_bestsolution']['name'], $_FILES['imagefile_bestsolution']['tmp_name']);
 	            }
 	        }
-	        
+
 	        if ($this->object->getEnableForUsersConf()) {
 	            $this->object->setLogCount($_POST['logCountValue'] ?? 3);
 	            $this->object->setLogBkgr($_POST['logBkgrValue'] ?? 0);
@@ -240,18 +240,18 @@ class assPaintQuestionGUI extends assQuestionGUI
 	    }
 	    return 1;
 	}
-	
+
 	/**
 	 * Get the output for question preview
 	 * (called from ilObjQuestionPoolGUI)
-	 * 
+	 *
 	 * @param boolean	show only the question instead of embedding page (true/false)
 	 */
 	function getPreview($show_question_only = false, $showInlineFeedback = false)
-	{	
-	    global $DIC, $tpl;			
-		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output_dev.html");						
+	{
+	    global $DIC, $tpl;
+		$plugin       = $this->object->getPlugin();
+		$template     = $plugin->getTemplate("output_dev.html");
 		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($this->object->getQuestion(), TRUE));
 		if (!$this->object->getLineValue()) {
 			$template->setVariable("DISPLAY_LINE", "8");
@@ -260,17 +260,17 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}
 
 		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
-		
+
 		if ($this->object->getImageFilename() && $this->object->getRadioOption() != "radioOwnSize") {
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
 		}
-		
+
 		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
 			//TODO workaround this someday.
-			//For now needed for old or imported questions. 
+			//For now needed for old or imported questions.
 			if ($this->object->getResizedImageStatus() == 0){
 				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
-				
+
 			}
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb()."resized_".$this->object->getImageFilename());
 		}
@@ -290,7 +290,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$size = getimagesize($image);
 				$template->setVariable("WIDTH", $size[0] + 61);
 				$template->setVariable("HEIGHT", $size[1] + 31);
-				
+
 				$height = $size[1] + 31;
 				if ($height < 400) {
 					$template->setVariable("HEIGHT_DIV", 400);
@@ -307,16 +307,16 @@ class assPaintQuestionGUI extends assQuestionGUI
 		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/_assets/literallycanvas.css'.self::URL_SUFFIX);
 		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/react-0.14.3.js');
 		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/literallycanvas.js');
-		
+
 		$template->setVariable("RESUME", "");
-		
+
 		$questionoutput = $template->get();
 		if(!$show_question_only)
 		{
 			// get page object output
 			$questionoutput = $this->getILIASPage($questionoutput);
 		}
-		
+
 		return $questionoutput;
 	}
 
@@ -338,38 +338,38 @@ class assPaintQuestionGUI extends assQuestionGUI
 		if ($active_id)
 		{
 		    $user_solution = $this->object->getSolutionStored($active_id, $pass, true);
-			if (!is_array($user_solution)) 
+			if (!is_array($user_solution))
 			{
 				$user_solution = array();
 			}
 		}
-		
-		$plugin       = $this->object->getPlugin();		
-		$template     = $plugin->getTemplate("output_dev.html");		
+
+		$plugin       = $this->object->getPlugin();
+		$template     = $plugin->getTemplate("output_dev.html");
 		$output 	  = $this->object->getQuestion();
-		
+
 		if (!$this->object->getLineValue()) {
 			$template->setVariable("DISPLAY_LINE", "8");
 		} else {
 			$template->setVariable("DISPLAY_LINE", "1, 5, 10, 20, 30");
 		}
-		
+
 		$template->setVariable("PAINT_ID", "qst_" . $this->object->getId());
-		
+
 		if ($this->object->getImageFilename() && $this->object->getRadioOption() != "radioOwnSize") {
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb().$this->object->getImageFilename());
 		}
-		
+
 		if ($this->object->getImageFilename() && $this->object->getRadioOption() == "radioOwnSize") {
 			//TODO workaround this someday.
-			//For now needed for old or imported questions. 
+			//For now needed for old or imported questions.
 			if ($this->object->getResizedImageStatus() == 0){
 				$this->object->resizeImage( $this->object->getCanvasWidth(),$this->object->getCanvasHeight());
-				
+
 			}
 			$template->setVariable("BACKGROUND", $this->object->getImagePathWeb()."resized_".$this->object->getImageFilename());
 		}
-		
+
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
 			$template->setVariable("WIDTH", $this->object->getCanvasWidth() + 61);
@@ -383,7 +383,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$size = getimagesize($image);
 				$template->setVariable("WIDTH", $size[0] + 61);
 				$template->setVariable("HEIGHT", $size[1] + 31);
-				
+
 				$height = $size[1] + 31;
 				if ($height < 400) {
 					$template->setVariable("HEIGHT_DIV", 400);
@@ -396,11 +396,11 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$template->setVariable("HEIGHT", 731);
 			}
 		}
-		
+
 		$DIC->globalScreen()->layout()->meta()->addCss(self::URL_PATH.'/templates/_assets/literallycanvas.css'.self::URL_SUFFIX);
 		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/react-0.14.3.js');
 		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/_js_libs/literallycanvas.js');
-		
+
 		// letzte gespeicherte Eingabe anzeigen
 		$base64 = "";
 		if ($user_solution["value2"])
@@ -408,17 +408,18 @@ class assPaintQuestionGUI extends assQuestionGUI
 			// wenn eingabe vorhanden, dann bild von gegebener url als base64-string konvertieren
 			$content = file_get_contents ( $user_solution["value2"]);
 			$base64 = 'data:image/png;base64,'.base64_encode( $content );
-		}							
-		
+		}
+
 		if ($user_solution["value2"] != 'path'){
+			$template->setVariable("RESUMEJSON_TA",(string) ($user_solution["value1"] ?? ''));
 			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\", (string) ($user_solution["value1"] ?? '')));
 		}
-		$template->setVariable("RESUME", ilLegacyFormElementsUtil::prepareFormOutput($base64));	
-		
-		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($output, TRUE));	
+		$template->setVariable("RESUME", ilLegacyFormElementsUtil::prepareFormOutput($base64));
+
+		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($output, TRUE));
 		$questionoutput = $template->get();
 		$pageoutput = $this->outQuestionPage("", $is_question_postponed, $active_id, $questionoutput);
-		return $pageoutput;		
+		return $pageoutput;
 	}
 
 	/**
@@ -432,7 +433,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	 * @param boolean $show_correct_solution Show the correct solution instead of the user solution
 	 * @param boolean $show_manual_scoring   Show specific information for the manual scoring output
 	 * @param bool    $show_question_text
-	 
+
 	 * @return string solution output of the question as HTML code
 	 */
 	function getSolutionOutput(
@@ -454,31 +455,31 @@ class assPaintQuestionGUI extends assQuestionGUI
 		{
 			// get the solutions of a user
 		    $user_solution = $this->object->getSolutionStored($active_id, $pass, true);
-			if (!is_array($user_solution)) 
+			if (!is_array($user_solution))
 			{
 				$user_solution = array();
 			}
-		} else {			
+		} else {
 			$user_solution = array();
 		}
 
-		$plugin       = $this->object->getPlugin();		
+		$plugin       = $this->object->getPlugin();
 		$template     = $plugin->getTemplate("solution.html");
-		$output = $this->object->getQuestion();			
-		
+		$output = $this->object->getQuestion();
+
 		if ($show_correct_solution)
-		{	
+		{
 		    if ($this->object->getImageFilenameBestsolution() != "") {
 		      return "<img src='" . $this->object->getImagePathWeb() . $this->object->getImageFilenameBestsolution() . "'> ";
 		    } else {
 		        return $plugin->txt("not_set");
 		    }
 
-			//$template->setVariable("ID", $this->object->getId().'CORRECT_SOLUTION');	
+			//$template->setVariable("ID", $this->object->getId().'CORRECT_SOLUTION');
 			// TODO hier nur die Musterlösung anzeigen, da wir uns im test beim drücken von check befinden ;)
-		}			
+		}
 		else
-			$template->setVariable("ID", $this->object->getId());		
+			$template->setVariable("ID", $this->object->getId());
 
 		//get background and save in var
 		if ($this->object->getImageFilename())
@@ -486,7 +487,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 			$pathToImage = $this->object->getImagePath().$this->object->getImageFilename();
 
 			list ( $width, $height, $type ) = getimagesize ( $pathToImage );
-			
+
 			switch ( $type )
 			{
 				case 1:
@@ -504,13 +505,13 @@ class assPaintQuestionGUI extends assQuestionGUI
 					$white = imagecolorallocate($background,  255, 255, 255);
 					imagefilledrectangle($background, 0, 0, $backgroundWidth, $backgroundHeight, $white);
 					imagecopy($background, $backgroundInput, 0, 0, 0, 0, $backgroundWidth, $backgroundHeight);
-			} 
+			}
 			//predefine picture in case no drawing exists -> show only background image
 			ob_start();
 			imagepng($background);
 			$image = ob_get_clean();
-			$base64 = base64_encode( $image );	
-		} else 
+			$base64 = base64_encode( $image );
+		} else
 		{
 			//transparent pixel, no background
 			//will be overwritten if drawing exists
@@ -519,7 +520,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 		//preset formular
 		$template->setVariable("SOLUTION", ilLegacyFormElementsUtil::prepareFormOutput($base64));
 
-		
+
 		if ($this->object->getRadioOption() == "radioOwnSize")
 		{
 			$template->setVariable("WIDTH", $this->object->getCanvasWidth());
@@ -538,10 +539,10 @@ class assPaintQuestionGUI extends assQuestionGUI
 				$template->setVariable("HEIGHT", 700);
 			}
 		}
-		
+
 		foreach ($user_solution as $solution)
-		{				
-				
+		{
+
 				if ($user_solution["value2"])
 				{
 					$content = file_get_contents ($user_solution["value2"]);
@@ -571,51 +572,51 @@ class assPaintQuestionGUI extends assQuestionGUI
 							imagepng($resized);
 						} else //use original background
 						{
-							imagepng($background);			
+							imagepng($background);
 						}
 						$image = ob_get_clean();
 						$base64 = base64_encode( $image );
-						imagedestroy($background);  
+						imagedestroy($background);
 						imagedestroy($drawing);
 					} else //only use the drawing
 					{
 						$base64 = base64_encode( $content );
-					} 
+					}
 				}
-				$template->setVariable("SOLUTION", ilLegacyFormElementsUtil::prepareFormOutput($base64));		
-		}		
+				$template->setVariable("SOLUTION", ilLegacyFormElementsUtil::prepareFormOutput($base64));
+		}
 
 		$template->setVariable("QUESTIONTEXT", self::prepareTextareaOutput($output, TRUE));
-		
+
 		if ($result_output)
 		{
 			$points = $this->object->getMaximumPoints();
-			$resulttext = ($points == 1) ? "(%s " . "point" . ")" : "(%s " . "points" . ")"; 
+			$resulttext = ($points == 1) ? "(%s " . "point" . ")" : "(%s " . "points" . ")";
 			$template->setCurrentBlock("result_output");
 			$template->setVariable("RESULT_OUTPUT", sprintf($resulttext, $points));
 			$template->parseCurrentBlock();
-		}			
-		
+		}
+
 		// generate the question output
 		$solutiontemplate = new ilTemplate("tpl.il_as_tst_solution_output.html",TRUE, TRUE, "Modules/TestQuestionPool");
 		$questionoutput = $template->get();
 
 		$feedback = ($show_feedback) ? $this->getGenericFeedbackOutput($active_id, $pass) : "";
 		if (strlen($feedback)) $solutiontemplate->setVariable("FEEDBACK", self::prepareTextareaOutput( $feedback, true ));
-		
+
 		$solutiontemplate->setVariable("SOLUTION_OUTPUT", $questionoutput);
 
-		$solutionoutput = $solutiontemplate->get(); 
-		
+		$solutionoutput = $solutiontemplate->get();
+
 		if(!$show_question_only)
 		{
 			// get page object output
 			$solutionoutput = $this->getILIASPage($solutionoutput);
 		}
-		
+
 		return $solutionoutput;
 	}
-	
+
 	/**
 	 * Returns the answer specific feedback for the question
 	 *
@@ -629,7 +630,7 @@ class assPaintQuestionGUI extends assQuestionGUI
 	    $output = '';
 	    return self::prepareTextareaOutput($output, TRUE);
 	}
-	
+
 	/**
 	 * Sets the ILIAS tabs for this question type
 	 * called from ilObjTestGUI and ilObjQuestionPoolGUI
