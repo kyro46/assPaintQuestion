@@ -411,7 +411,17 @@ class assPaintQuestionGUI extends assQuestionGUI
 		}							
 		
 		if ($user_solution["value2"] != 'path'){
-			$template->setVariable("RESUMEJSON",preg_replace("{\\\}", "\\\\\\", (string) ($user_solution["value1"] ?? '')));
+		    $raw_val = (string) ($user_solution["value1"] ?? '');
+			// For the <textarea> (HTML Context)
+			// Converts <, >, ", ', and & into HTML entities.
+			$html_safe = ilLegacyFormElementsUtil::prepareFormOutput($raw_val);
+			$template->setVariable("RESUMEJSON_TA", $html_safe);
+
+			// For the <script> variable (JavaScript Context)
+			// json_encode() is the gold standard. It handles quotes, backslashes,
+			// and even escapes the "/" in "</script>" automatically to prevent tag breakouts.
+			$js_safe = json_encode($raw_val);
+			$template->setVariable("RESUMEJSON", $js_safe);
 		}
 		$template->setVariable("RESUME", ilLegacyFormElementsUtil::prepareFormOutput($base64));	
 		
