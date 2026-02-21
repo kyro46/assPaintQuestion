@@ -289,6 +289,7 @@ class assPaintQuestionGUI extends assQuestionGUI implements ilGuiQuestionScoring
 		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/default/_js_libs/react-0.14.3.js');
 		$DIC->globalScreen()->layout()->meta()->addJs(self::URL_PATH.'/templates/default/_js_libs/literallycanvas.js');
 		
+		$template->setVariable("RESUMEJSON", "''");
 		$template->setVariable("RESUME", "");
 		
 		$questionoutput = $template->get();
