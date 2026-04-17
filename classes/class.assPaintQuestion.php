@@ -154,8 +154,13 @@ class assPaintQuestion extends assQuestion
 	    
 		$file = $this->getImagePath() . $this->getImageFilename();
 		$file_resized = $this->getImagePath() ."resized_".$this->getImageFilename();
-		@unlink($file); // delete image from folder
-		@unlink($file_resized);
+		
+		if (isset($file) && is_file($file)) {
+		    unlink($file); // delete image from folder
+		}
+		if (isset($file_resized) && is_file($file_resized)) {
+		    unlink($file_resized);
+		}
 		$this->image_filename = "";
 		$ilDB->manipulate('update il_qpl_qst_paint_check set '.'resized = ' . 0 .' '.'WHERE question_fi = '.$this->getId());
 	}
@@ -166,7 +171,9 @@ class assPaintQuestion extends assQuestion
 	    $ilDB = $DIC->database();
 	    
 	    $file = $this->getImagePath() . $this->getImageFilenameBestsolution();	    
-	    @unlink($file); // delete image from folder
+	    if (isset($file) && is_file($file)) {
+	        unlink($file); // delete image from folder
+	    }
 	    $this->image_filename_bestsolution = "";
 	}
 
@@ -604,7 +611,7 @@ class assPaintQuestion extends assQuestion
 	    // make a real clone to keep the object unchanged
 	    $clone = clone $this;
 	    
-	    $original_id = assQuestion::_getOriginalId($this->getId());
+	    $original_id = $this->questioninfo->getOriginalId($this->id);
 	    $source_questionpool_id = $this->getObjId();
 	    $clone->setId(-1);
 	    $clone->setObjId($target_questionpool_id);
@@ -897,34 +904,42 @@ class assPaintQuestion extends assQuestion
 
 			$this->removeCurrentSolution($active_id, $pass, $authorized);
 			
-			if (strlen($solution["value2"]) > 0) {
+			if (isset($solution["value2"]) && strlen($solution["value2"]) > 0) {
 				$microtime = round(microtime(true) * 1000);
-				$filename = $this->getFileUploadPath($test_id, $active_id).$microtime."_PaintTask_" . $pass . ".png";
+				$fileUploadPath = $this->getFileUploadPath($test_id, $active_id);
+				$filename = $fileUploadPath.$microtime."_PaintTask_" . $pass . ".png";
 				
-				if (!@file_exists($this->getFileUploadPath($test_id, $active_id)))
-				    ilFileUtils::makeDirParents($this->getFileUploadPath($test_id, $active_id));
+				if (!is_dir($fileUploadPath)) {
+				    ilFileUtils::makeDirParents($fileUploadPath);
+				}
 					
 					// Dont't delete old solutions as long as the test or the specific test pass exists: comment unlink
 					// Grab all files from the desired folder
-					$files_draw_layer = glob( $this->getFileUploadPath($test_id, $active_id).'*PaintTask_' . $pass . '.png' );
-					$files_full_backup = glob( $this->getFileUploadPath($test_id, $active_id).'*full_backup_' . $pass . '.png' );
+				    $files_draw_layer = glob($fileUploadPath.'*PaintTask_' . $pass . '.png' );
+				    $files_full_backup = glob($fileUploadPath.'*full_backup_' . $pass . '.png' );
 					
 					$counter =  $this->getEnableForUsersConf() ? $this->getLogCount() : $this->getLogCountConf();
 					
 					if (count($files_draw_layer) >= $counter)
 					{
-						usort($files_draw_layer, function($a, $b) {
-							return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
-						});
-							unlink($files_draw_layer[0]); // delete oldest file
+					    usort($files_draw_layer, function($a, $b) {
+					        return intval(explode('_', $a)[0]) <=> intval(explode('_', $b)[0]);
+					    });
+
+					    if (is_file($files_draw_layer[0])) {
+					        unlink($files_draw_layer[0]); // delete oldest file
+					    }
 					}
 					
 					if (count($files_full_backup) >= $counter)
 					{
-						usort($files_full_backup, function($a, $b) {
-							return intval(explode('_', $a)[0]) < intval(explode('_', $b)[0]);
-						});
-							unlink($files_full_backup[0]); // delete oldest file
+					    usort($files_full_backup, function($a, $b) {
+					        return intval(explode('_', $a)[0]) <=> intval(explode('_', $b)[0]);
+					    });
+					    
+					    if (is_file($files_full_backup[0])) {
+					       unlink($files_full_backup[0]); // delete oldest file
+				        }
 					}
 					
 					$matches = array();

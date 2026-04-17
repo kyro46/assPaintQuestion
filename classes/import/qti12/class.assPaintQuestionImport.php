@@ -174,7 +174,7 @@ class assPaintQuestionImport extends assQuestionImport
 			);
 			
 			$this->object->setImageFilename($questionimage["label"]);			
-			$image =& base64_decode($questionimage["content"]);
+			$image = base64_decode($questionimage["content"]);
 			$imagepath = $this->object->getImagePath();
 			if (!file_exists($imagepath))
 			{
@@ -241,7 +241,7 @@ class assPaintQuestionImport extends assQuestionImport
 		    );
 		    
 		    $this->object->setImageFilenameBestsolution($questionimage["label"]);
-		    $image =& base64_decode($questionimage["content"]);
+		    $image = base64_decode($questionimage["content"]);
 		    $imagepath = $this->object->getImagePath();
 		    if (!file_exists($imagepath))
 		    {
