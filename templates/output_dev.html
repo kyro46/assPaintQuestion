@@ -64,5 +64,27 @@
 		textarea_{PAINT_ID}.value = base_{PAINT_ID}; // als base64-string
     });
 
+	setTimeout(function patchMarkNavigation() {
+		if (!il.TestPlayerQuestionEditControl) {
+			return setTimeout(patchMarkNavigation, 50);
+		}
+		var originalCheckNavigation = il.TestPlayerQuestionEditControl.checkNavigation;
+		il.TestPlayerQuestionEditControl.checkNavigation = function(href, cmd, e) {
+			if (href && href.indexOf('markQuestion') !== -1) {
+				var JSON_{PAINT_ID} = lc_{PAINT_ID}.getSnapshotJSON();
+				JSON_{PAINT_ID} = JSON_{PAINT_ID}.replace(/'/g, '\\"');
+				textareaJSON_{PAINT_ID}.value = JSON_{PAINT_ID};
+				textarea_{PAINT_ID}.value = lc_{PAINT_ID}.getImage({rect: {x: 0, y: 0, width: ({WIDTH}-61), height: ({HEIGHT}-31)},scale: 1, includeWatermark: false}).toDataURL();
+				var $form = jQuery('#taForm');
+				$form.find('input[name=test_player_navigation_url], input[name="cmd[submitSolution]"]').remove();
+				jQuery('<input>').attr({type: 'hidden', name: 'test_player_navigation_url', value: href.replace(/&amp;/g, '&')}).appendTo($form);
+				jQuery('<input>').attr({type: 'hidden', name: 'cmd[submitSolution]', value: 'Save'}).appendTo($form);
+				$form.submit();
+				return false;
+			}
+			return originalCheckNavigation(href, cmd, e);
+		};
+	});
+
 </script>
     
